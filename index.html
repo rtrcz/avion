@@ -2,964 +2,507 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <meta name="theme-color" content="#050811">
-  <title>ESP32-S3 Quad Bench Controller</title>
-
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <style>
-    * {
-      box-sizing: border-box;
-      user-select: none;
-      -webkit-user-select: none;
-    }
-
-    html, body {
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      overflow: hidden;
-      background: #050811;
-      color: #e2e8f0;
-      font-family: system-ui, sans-serif;
-    }
-
-    button { touch-action: manipulation; }
-
-    .hud-card {
-      background: rgba(15, 23, 42, .88);
-      border: 1px solid rgba(255,255,255,.12);
-      backdrop-filter: blur(10px);
-    }
-
-    .joystick-container { touch-action: none; }
-    .glow-red { box-shadow: 0 0 16px rgba(239,68,68,.35); }
-    .glow-green { box-shadow: 0 0 16px rgba(34,197,94,.25); }
-
-    canvas {
-      display: block;
-      width: 100%;
-      height: 100%;
-      touch-action: none;
-    }
-
-    #rawLogConsole {
-      user-select: text;
-      -webkit-user-select: text;
-    }
-
-    @media (max-width: 767px) {
-      main { gap: 8px; }
-      .control-deck { min-height: 190px; }
-      .center-panel { min-height: 220px; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>S3 Quad Controller</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg:#080d17; --panel:#111b2b; --line:#263852;
+  --text:#e8f1ff; --muted:#8da3bf; --cyan:#42d9f5;
+  --green:#5ce0a0; --red:#ff647c; --amber:#ffc96b;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0; padding:16px; background:var(--bg); color:var(--text);
+  font:15px system-ui,-apple-system,Segoe UI,sans-serif;
+}
+main { max-width:900px; margin:auto; }
+h1 { font-size:23px; margin:0 0 5px; }
+h2 { font-size:16px; margin:0 0 12px; }
+p { color:var(--muted); }
+header { margin-bottom:16px; }
+.panel {
+  background:var(--panel); border:1px solid var(--line);
+  border-radius:15px; padding:15px; margin-bottom:13px;
+}
+.row { display:flex; gap:9px; flex-wrap:wrap; align-items:center; }
+button {
+  border:1px solid var(--line); border-radius:10px; padding:12px 15px;
+  color:var(--text); background:#1b2a40; font-size:14px;
+  font-weight:700; cursor:pointer; touch-action:manipulation;
+}
+button:disabled { opacity:.4; cursor:not-allowed; }
+.primary { background:#123c54; border-color:#277b9c; }
+.danger { background:#4b1e2a; border-color:#9b4053; }
+.safe { background:#173d31; border-color:#347b61; }
+.small { padding:7px 10px; font-size:12px; }
+.status {
+  display:inline-block; padding:5px 9px; border-radius:8px;
+  background:#273246; color:var(--amber); font-size:12px; font-weight:700;
+}
+.status.good { color:var(--green); }
+.status.bad { color:var(--red); }
+.note {
+  border-left:3px solid var(--amber); padding:9px 12px;
+  background:#241f17; color:#f3d8a6; border-radius:5px;
+  font-size:13px; margin-top:12px;
+}
+.grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.metric {
+  padding:10px; border:1px solid var(--line); border-radius:10px;
+  min-width:0;
+}
+.metric .label { font-size:12px; color:var(--muted); }
+.metric .value { font-size:21px; font-weight:750; overflow-wrap:anywhere; }
+.mini { font-size:12px; color:var(--muted); }
+.joysticks { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:15px; }
+.stick-wrap { min-width:0; text-align:center; }
+.stick {
+  position:relative; width:min(100%,280px); aspect-ratio:1;
+  margin:8px auto; border:1px solid #38516e; border-radius:50%;
+  background:
+    linear-gradient(90deg,transparent 49.5%,#33465d 49.5%,#33465d 50.5%,transparent 50.5%),
+    linear-gradient(transparent 49.5%,#33465d 49.5%,#33465d 50.5%,transparent 50.5%),
+    radial-gradient(circle,#1a2a40,#0d1625);
+  touch-action:none; user-select:none; overflow:hidden;
+}
+.stick:before {
+  content:""; position:absolute; inset:15%; border:1px dashed #33465d; border-radius:50%;
+}
+.knob {
+  position:absolute; width:23%; aspect-ratio:1; border-radius:50%;
+  left:38.5%; top:38.5%; background:var(--cyan);
+  border:3px solid #d9f9ff; box-shadow:0 0 16px #42d9f555;
+  pointer-events:none;
+}
+.readout { color:var(--cyan); font:13px ui-monospace,monospace; }
+input[type=checkbox] { transform:scale(1.2); }
+#log {
+  height:170px; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere;
+  background:#070b12; padding:10px; border-radius:9px;
+  font:12px ui-monospace,SFMono-Regular,monospace; color:#b8cbe2;
+}
+footer { color:var(--muted); font-size:12px; text-align:center; padding:8px; }
+@media(max-width:520px) {
+  body { padding:10px; }
+  .panel { padding:12px; }
+  .joysticks { gap:8px; }
+  .grid { gap:8px; }
+  button { padding:11px 12px; }
+}
+</style>
 </head>
-
-<body class="flex flex-col">
-
-<header class="hud-card flex items-center justify-between gap-2 px-3 py-2 shrink-0">
-  <div class="flex items-center gap-2">
-    <button id="connectBtn"
-      class="px-3 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-xs font-bold">
-      CONNECT BLE
-    </button>
-
-    <div class="flex items-center gap-2 text-xs">
-      <span id="connIndicator" class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
-      <span id="connStatus" class="font-mono text-slate-400">DISCONNECTED</span>
-    </div>
-  </div>
-
-  <div class="flex items-center gap-3 text-xs font-mono">
-    <span>PWM: <b id="hudPwm" class="text-cyan-400">0</b></span>
-    <span id="outputStatus" class="text-amber-400">OUTPUTS OFF</span>
-    <span id="hudArmBadge"
-      class="px-2 py-1 rounded bg-rose-500/20 text-rose-400 font-bold">
-      DISARMED
-    </span>
-    <button id="logBtn" class="px-2 py-1 rounded bg-slate-700">LOG</button>
-  </div>
+<body>
+<main>
+<header>
+  <h1>ESP32-S3 Quad HUD</h1>
+  <p style="margin:5px 0 10px">BLE controller · live telemetry · bench testing</p>
+  <span id="connection" class="status">DISCONNECTED</span>
+  <span id="imuStatus" class="status">IMU UNKNOWN</span>
+  <span id="calStatus" class="status">CAL UNKNOWN</span>
+  <span id="armStatus" class="status">DISARMED</span>
 </header>
 
-<main class="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-[1fr_260px_1fr] gap-2 p-2 overflow-y-auto">
+<section class="panel">
+  <h2>Connection</h2>
+  <div class="row">
+    <button id="connectBtn" class="primary">Connect to S3_Quad_PWM</button>
+    <button id="disconnectBtn">Disconnect</button>
+    <button id="refreshBtn" class="small">Clear log</button>
+  </div>
+  <div class="mini" id="deviceName" style="margin-top:10px">No device connected</div>
+  <div class="note">
+    BENCH TEST ONLY. Remove all propellers. This page never enables motor outputs.
+    Keep ENABLE_MOTOR_OUTPUTS set to false in firmware. A reported IMU-ready state
+    does not independently verify sensor identity or flight safety.
+  </div>
+</section>
 
-  <!-- LEFT: YAW AND THROTTLE -->
-  <section class="hud-card rounded-2xl p-3 flex flex-col control-deck min-h-0">
-    <div class="flex justify-between items-center border-b border-slate-700 pb-2 mb-2">
-      <span class="text-xs font-bold uppercase">Throttle / Yaw</span>
-      <label class="text-xs text-slate-400 flex items-center gap-2">
-        <input id="throttleHoldToggle" type="checkbox" checked>
-        Hold throttle
-      </label>
+<section class="panel">
+  <h2>Safety controls</h2>
+  <div class="row">
+    <button id="armBtn" class="safe" disabled>ARM REQUEST</button>
+    <button id="disarmBtn" disabled>DISARM</button>
+    <button id="stopBtn" class="danger" disabled>STOP</button>
+  </div>
+  <p class="mini" id="commandStatus">Connect to begin. ARM is only a request to the firmware.</p>
+</section>
+
+<section class="panel">
+  <h2>Live telemetry</h2>
+  <div class="grid">
+    <div class="metric"><div class="label">Roll</div><div class="value" id="roll">—°</div></div>
+    <div class="metric"><div class="label">Pitch</div><div class="value" id="pitch">—°</div></div>
+    <div class="metric"><div class="label">Gyro X / Y / Z</div><div class="value" style="font-size:15px" id="gyro">— / — / —</div></div>
+    <div class="metric"><div class="label">Distance</div><div class="value" id="distance">—</div></div>
+    <div class="metric"><div class="label">Throttle reported by firmware</div><div class="value" id="throttleReported">—</div></div>
+    <div class="metric"><div class="label">Output state</div><div class="value" id="output">—</div></div>
+  </div>
+  <p class="mini" id="telemetryTime">Waiting for telemetry…</p>
+</section>
+
+<section class="panel">
+  <h2>Manual input controls</h2>
+  <p class="mini">Left stick: yaw and throttle. Right stick: roll and pitch. Inputs return to neutral on release except throttle when hold is enabled.</p>
+  <div class="joysticks">
+    <div class="stick-wrap">
+      <strong>YAW / THROTTLE</strong>
+      <div class="stick" id="leftStick" aria-label="Yaw and throttle joystick">
+        <div class="knob"></div>
+      </div>
+      <div class="readout" id="leftReadout">Yaw 0 · Throttle 0%</div>
+      <label class="mini"><input type="checkbox" id="holdThrottle"> Hold throttle on release</label>
     </div>
-
-    <button id="stopBtn"
-      class="w-full py-3 rounded-xl bg-red-600 hover:bg-red-500 font-black text-sm glow-red">
-      EMERGENCY STOP
-    </button>
-
-    <div id="leftJoystickBox"
-      class="joystick-container flex-1 min-h-28 relative mt-2">
-      <canvas id="leftJoystickCanvas"></canvas>
+    <div class="stick-wrap">
+      <strong>ROLL / PITCH</strong>
+      <div class="stick" id="rightStick" aria-label="Roll and pitch joystick">
+        <div class="knob"></div>
+      </div>
+      <div class="readout" id="rightReadout">Roll 0 · Pitch 0</div>
     </div>
+  </div>
+  <div class="row" style="justify-content:center;margin-top:12px">
+    <button id="centerBtn">Center controls</button>
+  </div>
+  <p class="mini">Commands are sent as J,roll,pitch,yaw,throttle. Roll, pitch and yaw range from −100 to 100; throttle ranges from 0 to 100%.</p>
+</section>
 
-    <div class="grid grid-cols-2 gap-2 text-center font-mono text-xs mt-2">
-      <div class="bg-slate-900 p-2 rounded">
-        <span class="block text-slate-500 text-[10px]">YAW</span>
-        <b id="readoutYaw" class="text-cyan-400">0</b>
-      </div>
-      <div class="bg-slate-900 p-2 rounded">
-        <span class="block text-slate-500 text-[10px]">THROTTLE</span>
-        <b id="readoutThrottle" class="text-cyan-400">0%</b>
-      </div>
-    </div>
-  </section>
-
-  <!-- CENTER: ARM, ATTITUDE, SENSOR STATUS -->
-  <section class="center-panel flex flex-col gap-2 min-h-0">
-    <div class="hud-card rounded-2xl p-3">
-      <div class="text-xs font-bold uppercase text-slate-400 mb-2">
-        Master arming lock
-      </div>
-
-      <div class="grid grid-cols-2 gap-2">
-        <button id="armBtn"
-          class="py-3 rounded-xl bg-emerald-700/50 border border-emerald-500 text-emerald-300 font-black">
-          ARM
-        </button>
-        <button id="disarmBtn"
-          class="py-3 rounded-xl bg-slate-700 border border-slate-600 font-bold">
-          DISARM
-        </button>
-      </div>
-
-      <p id="safetyMessage" class="text-[11px] text-amber-300 mt-2">
-        Bench testing only. Motor outputs must remain disabled.
-      </p>
-    </div>
-
-    <div class="hud-card rounded-2xl p-3 flex flex-col items-center">
-      <div class="text-xs font-bold uppercase text-slate-400 mb-2">
-        Attitude
-      </div>
-
-      <div class="w-28 h-28 rounded-full border-2 border-slate-600 overflow-hidden relative bg-slate-950">
-        <div id="horizonBar"
-          class="absolute w-40 h-40 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-          style="transform:translate(-50%,-50%) rotate(0deg)">
-          <div class="absolute inset-0"
-            style="background:linear-gradient(to bottom,#155e75 0%,#0891b2 49.5%,#f59e0b 50.5%,#78350f 100%)">
-          </div>
-          <div class="absolute left-0 right-0 top-1/2 h-0.5 bg-white"></div>
-        </div>
-        <div class="absolute w-4 h-4 rounded-full border-2 border-emerald-400 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"></div>
-      </div>
-
-      <div class="flex justify-between w-full px-2 mt-2 font-mono text-xs">
-        <span>Roll: <b id="hudRoll" class="text-cyan-400">0.0°</b></span>
-        <span>Pitch: <b id="hudPitch" class="text-cyan-400">0.0°</b></span>
-      </div>
-    </div>
-
-    <div class="hud-card rounded-2xl p-3">
-      <div class="text-xs font-bold uppercase text-slate-400 mb-2">
-        Sensor status
-      </div>
-
-      <div class="text-xs flex justify-between py-1">
-        <span>MPU / IMU</span><b id="imuStatus">UNKNOWN</b>
-      </div>
-      <div class="text-xs flex justify-between py-1">
-        <span>Gyro calibration</span><b id="calStatus">UNKNOWN</b>
-      </div>
-      <div class="text-xs flex justify-between py-1">
-        <span>VL53L0X</span><b id="tofStatus">UNKNOWN</b>
-      </div>
-      <div class="text-xs flex justify-between py-1">
-        <span>Distance</span><b id="hudTof" class="text-cyan-400">Unavailable</b>
-      </div>
-
-      <div id="hudObstacleBanner"
-        class="mt-2 p-2 rounded bg-slate-900 text-center text-xs font-bold text-slate-400">
-        RANGE UNKNOWN
-      </div>
-    </div>
-  </section>
-
-  <!-- RIGHT: ROLL AND PITCH -->
-  <section class="hud-card rounded-2xl p-3 flex flex-col control-deck min-h-0">
-    <div class="flex justify-between items-center border-b border-slate-700 pb-2 mb-2">
-      <span class="text-xs font-bold uppercase">Pitch / Roll</span>
-      <span class="text-[10px] text-slate-500">Spring center</span>
-    </div>
-
-    <div id="rightJoystickBox"
-      class="joystick-container flex-1 min-h-28 relative">
-      <canvas id="rightJoystickCanvas"></canvas>
-    </div>
-
-    <div class="grid grid-cols-2 gap-2 text-center font-mono text-xs mt-2">
-      <div class="bg-slate-900 p-2 rounded">
-        <span class="block text-slate-500 text-[10px]">ROLL</span>
-        <b id="readoutRoll" class="text-cyan-400">0</b>
-      </div>
-      <div class="bg-slate-900 p-2 rounded">
-        <span class="block text-slate-500 text-[10px]">PITCH</span>
-        <b id="readoutPitch" class="text-cyan-400">0</b>
-      </div>
-    </div>
-  </section>
+<section class="panel">
+  <h2>Diagnostic log</h2>
+  <div id="log" role="log" aria-live="polite"></div>
+</section>
+<footer>BLE web controller · Firmware output safety depends on the firmware itself.</footer>
 </main>
 
-<!-- LOG MODAL -->
-<div id="logModal"
-  class="hidden fixed inset-0 z-50 bg-black/80 p-3 items-center justify-center">
-  <div class="hud-card w-full max-w-2xl h-4/5 rounded-xl p-3 flex flex-col">
-    <div class="flex justify-between mb-2">
-      <b class="text-sm">BLE / Telemetry Log</b>
-      <button id="closeLogBtn" class="px-3 py-1 bg-slate-700 rounded">CLOSE</button>
-    </div>
-    <pre id="rawLogConsole"
-      class="flex-1 overflow-auto whitespace-pre-wrap break-words bg-slate-950 p-3 rounded text-[11px] text-emerald-400 font-mono"></pre>
-    <button id="clearLogBtn" class="mt-2 self-end px-3 py-2 bg-slate-700 rounded text-xs">
-      CLEAR LOG
-    </button>
-  </div>
-</div>
-
 <script>
-'use strict';
+(() => {
+  "use strict";
 
-// ============================================================
-// BLE CONFIGURATION: MATCHES THE ESP32 SKETCH
-// ============================================================
+  const SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+  const RX_UUID      = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
+  const TX_UUID      = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
 
-const BLE_NAME = 'S3_Quad_PWM';
+  const $ = id => document.getElementById(id);
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
 
-const SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
-const RX_UUID      = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
-const TX_UUID      = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+  let device = null, server = null, rxChar = null, txChar = null;
+  let connected = false, writeChain = Promise.resolve();
+  let lastTelemetryAt = 0, lastCommandAt = 0, commandTimer = null;
+  let lastRaw = "";
+  let inputs = { roll:0, pitch:0, yaw:0, throttle:0 };
+  let latestFields = {};
 
-const COMMAND_INTERVAL_MS = 40;
-const OBSTACLE_DISTANCE_MM = 250;
-
-let bluetoothDevice = null;
-let rxCharacteristic = null;
-let txCharacteristic = null;
-let isConnected = false;
-let writeBusy = false;
-let pendingCommand = null;
-let commandTimer = null;
-
-let joyState = {
-  roll: 0,
-  pitch: 0,
-  yaw: 0,
-  throttle: 0
-};
-
-let lastTelemetry = {};
-let lastTelemetryAt = 0;
-let lastCommandAt = 0;
-
-// ============================================================
-// LOGGING AND UI HELPERS
-// ============================================================
-
-function logToConsole(message) {
-  const el = document.getElementById('rawLogConsole');
-  const time = new Date().toLocaleTimeString();
-
-  el.textContent += `[${time}] ${message}\n`;
-
-  // Bound memory use during long bench sessions.
-  if (el.textContent.length > 30000) {
-    el.textContent = el.textContent.slice(-20000);
+  function log(message) {
+    const time = new Date().toLocaleTimeString();
+    $("log").textContent += `[${time}] ${message}\n`;
+    $("log").scrollTop = $("log").scrollHeight;
   }
 
-  el.scrollTop = el.scrollHeight;
-}
-
-function setConnectionUI(connected) {
-  isConnected = connected;
-
-  const button = document.getElementById('connectBtn');
-  const indicator = document.getElementById('connIndicator');
-  const status = document.getElementById('connStatus');
-
-  if (connected) {
-    button.textContent = 'DISCONNECT BLE';
-    button.className =
-      'px-3 py-2 rounded-lg bg-rose-700 hover:bg-rose-600 text-xs font-bold';
-    indicator.className =
-      'w-2.5 h-2.5 rounded-full bg-emerald-500';
-    status.textContent = 'CONNECTED';
-    status.className = 'font-mono text-emerald-400 text-xs';
-  } else {
-    button.textContent = 'CONNECT BLE';
-    button.className =
-      'px-3 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-xs font-bold';
-    indicator.className =
-      'w-2.5 h-2.5 rounded-full bg-rose-500';
-    status.textContent = 'DISCONNECTED';
-    status.className = 'font-mono text-slate-400 text-xs';
-
-    document.getElementById('imuStatus').textContent = 'UNKNOWN';
-    document.getElementById('calStatus').textContent = 'UNKNOWN';
-    document.getElementById('tofStatus').textContent = 'UNKNOWN';
-  }
-}
-
-function updateJoystickReadouts() {
-  document.getElementById('readoutRoll').textContent = joyState.roll;
-  document.getElementById('readoutPitch').textContent = joyState.pitch;
-  document.getElementById('readoutYaw').textContent = joyState.yaw;
-  document.getElementById('readoutThrottle').textContent =
-    `${joyState.throttle}%`;
-}
-
-function zeroControls() {
-  joyState.roll = 0;
-  joyState.pitch = 0;
-  joyState.yaw = 0;
-  joyState.throttle = 0;
-
-  updateJoystickReadouts();
-
-  // Reposition both visual sticks.
-  if (window.leftStick) window.leftStick.reset();
-  if (window.rightStick) window.rightStick.reset();
-}
-
-// ============================================================
-// BLE CONNECTION
-// ============================================================
-
-async function toggleConnect() {
-  if (isConnected) {
-    // Attempt to disarm before disconnecting.
-    await sendImmediateCmd('STOP');
-
-    if (bluetoothDevice?.gatt?.connected) {
-      bluetoothDevice.gatt.disconnect();
-    }
-
-    setConnectionUI(false);
-    return;
+  function setStatus(id, text, kind="") {
+    const el = $(id);
+    el.textContent = text;
+    el.className = "status" + (kind ? " " + kind : "");
   }
 
-  if (!navigator.bluetooth) {
-    logToConsole('Web Bluetooth is unavailable in this browser.');
-    alert('Use a Web Bluetooth-compatible browser over HTTPS or localhost.');
-    return;
+  function updateConnectionUI() {
+    setStatus("connection", connected ? "CONNECTED" : "DISCONNECTED",
+              connected ? "good" : "bad");
+    $("connectBtn").disabled = connected;
+    $("disconnectBtn").disabled = !connected;
+    $("armBtn").disabled = !connected;
+    $("disarmBtn").disabled = !connected;
+    $("stopBtn").disabled = !connected;
   }
 
-  try {
-    logToConsole('Searching for S3_Quad_PWM...');
-
-    bluetoothDevice = await navigator.bluetooth.requestDevice({
-      filters: [{ name: BLE_NAME }],
-      optionalServices: [SERVICE_UUID]
-    });
-
-    bluetoothDevice.addEventListener(
-      'gattserverdisconnected',
-      onDisconnected
-    );
-
-    const server = await bluetoothDevice.gatt.connect();
-    const service = await server.getPrimaryService(SERVICE_UUID);
-
-    rxCharacteristic = await service.getCharacteristic(RX_UUID);
-    txCharacteristic = await service.getCharacteristic(TX_UUID);
-
-    await txCharacteristic.startNotifications();
-
-    txCharacteristic.addEventListener(
-      'characteristicvaluechanged',
-      handleTelemetryNotification
-    );
-
-    setConnectionUI(true);
-    logToConsole('BLE connected.');
-
-    // Begin streaming neutral commands.
-    lastCommandAt = Date.now();
-
-  } catch (error) {
-    logToConsole('BLE connection error: ' + error.message);
-    setConnectionUI(false);
-  }
-}
-
-function onDisconnected() {
-  logToConsole('BLE disconnected.');
-
-  rxCharacteristic = null;
-  txCharacteristic = null;
-  writeBusy = false;
-  pendingCommand = null;
-
-  setConnectionUI(false);
-  zeroControls();
-}
-
-document.getElementById('connectBtn').addEventListener(
-  'click', toggleConnect
-);
-
-// ============================================================
-// BLE WRITE QUEUE
-//
-// Only one write is active at a time. Repeated joystick updates
-// replace the pending joystick command instead of building a
-// large queue. STOP/DISARM take priority over pending joystick data.
-// ============================================================
-
-function queueCommand(command, priority = false) {
-  if (!isConnected || !rxCharacteristic) {
-    return Promise.resolve(false);
-  }
-
-  return new Promise(resolve => {
-    const item = { command, resolve, priority };
-
-    if (priority) {
-      if (pendingCommand) pendingCommand.resolve(false);
-      pendingCommand = item;
-    } else if (!pendingCommand || !pendingCommand.priority) {
-      if (pendingCommand) pendingCommand.resolve(false);
-      pendingCommand = item;
-    } else {
-      // Preserve the urgent command.
-      resolve(false);
+  async function connect() {
+    if (!navigator.bluetooth) {
+      log("Web Bluetooth unavailable. Try a supported Chrome browser over HTTPS or localhost.");
       return;
     }
-
-    drainCommandQueue();
-  });
-}
-
-async function drainCommandQueue() {
-  if (writeBusy || !pendingCommand) return;
-
-  writeBusy = true;
-
-  while (pendingCommand && isConnected && rxCharacteristic) {
-    const item = pendingCommand;
-    pendingCommand = null;
-
     try {
-      const characteristic = rxCharacteristic;
-      const data = new TextEncoder().encode(item.command + '\n');
+      $("connectBtn").disabled = true;
+      log("Opening Bluetooth device picker…");
+      device = await navigator.bluetooth.requestDevice({
+        filters: [{ name: "S3_Quad_PWM" }],
+        optionalServices: [SERVICE_UUID]
+      });
+      device.addEventListener("gattserverdisconnected", onDisconnected);
 
-      // ESP32 RX supports WRITE and WRITE WITHOUT RESPONSE.
-      if (characteristic.properties.writeWithoutResponse &&
-          characteristic.writeValueWithoutResponse) {
-        await characteristic.writeValueWithoutResponse(data);
+      $("deviceName").textContent = "Device: " + (device.name || "Unnamed BLE device");
+      log("Selected: " + (device.name || "Unnamed device"));
+      server = await device.gatt.connect();
+      const service = await server.getPrimaryService(SERVICE_UUID);
+      rxChar = await service.getCharacteristic(RX_UUID);
+      txChar = await service.getCharacteristic(TX_UUID);
+
+      txChar.addEventListener("characteristicvaluechanged", onTelemetry);
+      await txChar.startNotifications();
+
+      connected = true;
+      updateConnectionUI();
+      $("commandStatus").textContent = "Connected. Waiting for firmware telemetry.";
+      log("Connected; TX notifications enabled.");
+      startCommandLoop();
+    } catch (err) {
+      log("Connect failed: " + err.message);
+      connected = false;
+      updateConnectionUI();
+    } finally {
+      $("connectBtn").disabled = connected;
+    }
+  }
+
+  function onDisconnected() {
+    connected = false;
+    rxChar = null;
+    txChar = null;
+    server = null;
+    stopCommandLoop();
+    updateConnectionUI();
+    $("deviceName").textContent = "Device disconnected";
+    $("commandStatus").textContent = "Disconnected. Commands are not being sent.";
+    log("BLE disconnected.");
+  }
+
+  function disconnect() {
+    stopCommandLoop();
+    if (device && device.gatt && device.gatt.connected) {
+      device.gatt.disconnect();
+    } else {
+      onDisconnected();
+    }
+  }
+
+  // Serialize writes to avoid overlapping BLE GATT operations.
+  // Safety commands are placed in the same queue as all other writes.
+  function sendCommand(command) {
+    if (!connected || !rxChar) {
+      log("Not sent (disconnected): " + command);
+      return Promise.resolve(false);
+    }
+    const payload = command.endsWith("\n") ? command : command + "\n";
+    writeChain = writeChain.then(async () => {
+      if (!connected || !rxChar) return false;
+      const bytes = encoder.encode(payload);
+      if (rxChar.properties.write) {
+        await rxChar.writeValueWithResponse(bytes);
+      } else if (rxChar.properties.writeWithoutResponse) {
+        await rxChar.writeValueWithoutResponse(bytes);
       } else {
-        await characteristic.writeValue(data);
+        throw new Error("RX characteristic does not support writing");
       }
-
-      item.resolve(true);
       lastCommandAt = Date.now();
+      return true;
+    }).catch(err => {
+      log("BLE write failed: " + err.message);
+      $("commandStatus").textContent = "Write failed: " + err.message;
+      return false;
+    });
+    return writeChain;
+  }
 
-      if (item.priority) {
-        logToConsole('TX -> ' + item.command);
-      }
-    } catch (error) {
-      item.resolve(false);
-      logToConsole('BLE write failed: ' + error.message);
-      break;
+  function onTelemetry(event) {
+    const text = decoder.decode(event.target.value);
+    const line = text.replace(/\0/g, "").trim();
+    if (!line) return;
+    lastTelemetryAt = Date.now();
+    $("telemetryTime").textContent =
+      "Last telemetry: " + new Date(lastTelemetryAt).toLocaleTimeString();
+    if (line !== lastRaw) {
+      log("RX ← " + line);
+      lastRaw = line;
+    }
+    parseTelemetry(line);
+  }
+
+  function parseTelemetry(line) {
+    // Expected format: IMU:1,CAL:1,ARM:0,OUT:0,T:0,R:0.0,P:0.0,GX:0,GY:0,GZ:0,D:0,DOK:0
+    const fields = {};
+    for (const part of line.split(",")) {
+      const i = part.indexOf(":");
+      if (i < 1) continue;
+      fields[part.slice(0, i).trim().toUpperCase()] = part.slice(i + 1).trim();
+    }
+    if (!Object.keys(fields).length) return;
+    latestFields = { ...latestFields, ...fields };
+
+    const val = key => {
+      const n = Number(latestFields[key]);
+      return Number.isFinite(n) ? n : null;
+    };
+    const show = (key, suffix="") => {
+      const n = val(key);
+      return n === null ? "—" : n.toFixed(2) + suffix;
+    };
+
+    const imu = val("IMU"), cal = val("CAL"), arm = val("ARM"), out = val("OUT");
+    if (imu !== null) setStatus("imuStatus", imu ? "IMU READY" : "IMU ERROR", imu ? "good" : "bad");
+    if (cal !== null) setStatus("calStatus", cal ? "CALIBRATED" : "NOT CALIBRATED", cal ? "good" : "bad");
+    if (arm !== null) setStatus("armStatus", arm ? "ARM: 1" : "ARM: 0", arm ? "bad" : "");
+    if (out !== null) $("output").textContent = out ? "ENABLED" : "DISABLED";
+
+    $("roll").textContent = show("R", "°");
+    $("pitch").textContent = show("P", "°");
+    $("gyro").textContent = [show("GX"), show("GY"), show("GZ")].join(" / ");
+
+    const d = val("D"), dok = val("DOK");
+    $("distance").textContent = dok === 0 ? "Invalid" :
+      (d === null ? "—" : d.toFixed(0) + " mm");
+    $("throttleReported").textContent = show("T", "%");
+
+    if (arm === 1) {
+      $("commandStatus").textContent =
+        "Firmware reports ARM:1. Output state is shown separately.";
+    } else if (arm === 0) {
+      $("commandStatus").textContent =
+        "Firmware reports ARM:0. Check BLE RX logs and CAL:1.";
     }
   }
 
-  writeBusy = false;
-
-  // Process anything that arrived at the end of the previous write.
-  if (pendingCommand && isConnected) {
-    drainCommandQueue();
-  }
-}
-
-async function sendImmediateCmd(command) {
-  if (command === 'STOP' || command === 'DISARM') {
-    zeroControls();
+  async function requestArm() {
+    if (!connected) return;
+    log("TX → ARM");
+    $("commandStatus").textContent = "ARM request sent; waiting for ARM telemetry.";
+    await sendCommand("ARM");
   }
 
-  if (!isConnected) {
-    logToConsole('Cannot send command: BLE is disconnected.');
-    return;
+  async function requestDisarm() {
+    log("TX → DISARM");
+    await sendCommand("DISARM");
+    $("commandStatus").textContent = "DISARM request sent; awaiting telemetry.";
   }
 
-  const success = await queueCommand(
-    command,
-    command === 'STOP' || command === 'DISARM'
-  );
-
-  if (!success) {
-    logToConsole('Command was not sent.');
-  }
-}
-
-document.getElementById('stopBtn').addEventListener(
-  'click', () => sendImmediateCmd('STOP')
-);
-
-document.getElementById('armBtn').addEventListener(
-  'click', () => sendImmediateCmd('ARM')
-);
-
-document.getElementById('disarmBtn').addEventListener(
-  'click', () => sendImmediateCmd('DISARM')
-);
-
-// ============================================================
-// JOYSTICK COMMAND STREAM
-// ============================================================
-
-setInterval(() => {
-  if (!isConnected) return;
-
-  const command =
-    `J,${joyState.roll},${joyState.pitch},${joyState.yaw},${joyState.throttle}`;
-
-  queueCommand(command, false);
-}, COMMAND_INTERVAL_MS);
-
-// ============================================================
-// TELEMETRY PARSER
-//
-// Exact current firmware format:
-// IMU:1,CAL:1,ARM:0,OUT:0,T:0,R:1.20,P:-0.40,
-// GX:0.1,GY:0.2,GZ:0.0,D:450,DOK:1
-// ============================================================
-
-function parseTelemetry(raw) {
-  const params = {};
-
-  for (const item of raw.split(',')) {
-    const separator = item.indexOf(':');
-
-    if (separator < 1) continue;
-
-    const key = item.slice(0, separator).trim().toUpperCase();
-    const value = item.slice(separator + 1).trim();
-
-    params[key] = value;
+  async function stopNow() {
+    // Zero local setpoints immediately and stop repeating nonzero inputs.
+    inputs = { roll:0, pitch:0, yaw:0, throttle:0 };
+    leftStick.setPosition(0, 1);
+    rightStick.setPosition(0, 0);
+    updateReadouts();
+    log("TX → STOP");
+    await sendCommand("STOP");
+    $("commandStatus").textContent =
+      "STOP sent. Confirm ARM:0 and OUT:0 in telemetry.";
   }
 
-  return params;
-}
-
-function numeric(params, key) {
-  if (params[key] === undefined) return null;
-
-  const value = Number(params[key]);
-  return Number.isFinite(value) ? value : null;
-}
-
-function setStatus(id, good, goodText, badText) {
-  const el = document.getElementById(id);
-
-  el.textContent = good ? goodText : badText;
-  el.className = good
-    ? 'text-emerald-400 font-bold'
-    : 'text-rose-400 font-bold';
-}
-
-function handleTelemetryNotification(event) {
-  const raw = new TextDecoder().decode(event.target.value).trim();
-  if (!raw) return;
-
-  logToConsole('RX <- ' + raw);
-
-  const params = parseTelemetry(raw);
-  lastTelemetry = params;
-  lastTelemetryAt = Date.now();
-
-  // IMU and calibration status.
-  if (params.IMU !== undefined) {
-    setStatus(
-      'imuStatus',
-      params.IMU === '1',
-      'READY',
-      'NOT READY'
-    );
+  function startCommandLoop() {
+    stopCommandLoop();
+    commandTimer = setInterval(() => {
+      if (!connected) return;
+      const {roll, pitch, yaw, throttle} = inputs;
+      const command = `J,${roll},${pitch},${yaw},${throttle}`;
+      sendCommand(command);
+    }, 100);
   }
 
-  if (params.CAL !== undefined) {
-    setStatus(
-      'calStatus',
-      params.CAL === '1',
-      'CALIBRATED',
-      'NOT CALIBRATED'
-    );
+  function stopCommandLoop() {
+    if (commandTimer !== null) clearInterval(commandTimer);
+    commandTimer = null;
   }
 
-  // Armed state.
-  if (params.ARM !== undefined) {
-    const armed = params.ARM === '1';
-    const badge = document.getElementById('hudArmBadge');
+  function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+  function round(n) { return Math.round(n); }
 
-    badge.textContent = armed ? 'ARMED' : 'DISARMED';
+  function makeStick(id, onChange, release) {
+    const el = $(id), knob = el.querySelector(".knob");
+    let active = false, pointerId = null, center = {x:0,y:0};
+    let x = 0, y = 0;
 
-    badge.className = armed
-      ? 'px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 font-bold'
-      : 'px-2 py-1 rounded bg-rose-500/20 text-rose-400 font-bold';
-  }
-
-  // Hardware motor output enable flag.
-  if (params.OUT !== undefined) {
-    const outputsEnabled = params.OUT === '1';
-    const output = document.getElementById('outputStatus');
-
-    output.textContent = outputsEnabled ? 'OUTPUTS ENABLED' : 'OUTPUTS OFF';
-    output.className = outputsEnabled
-      ? 'text-rose-400 font-bold'
-      : 'text-amber-400';
-  }
-
-  // Firmware's T field is requested throttle PWM.
-  const pwm = numeric(params, 'T');
-
-  if (pwm !== null) {
-    document.getElementById('hudPwm').textContent =
-      Math.round(pwm);
-  }
-
-  // Roll and pitch angles.
-  const roll = numeric(params, 'R');
-  const pitch = numeric(params, 'P');
-
-  if (roll !== null && pitch !== null) {
-    document.getElementById('hudRoll').textContent =
-      roll.toFixed(1) + '°';
-
-    document.getElementById('hudPitch').textContent =
-      pitch.toFixed(1) + '°';
-
-    const horizon = document.getElementById('horizonBar');
-
-    horizon.style.transform =
-      `translate(-50%,-50%) translateY(${pitch * 1.2}px) rotate(${-roll}deg)`;
-  }
-
-  // Rangefinder: firmware reports D and DOK, not TOF_MM.
-  const distance = numeric(params, 'D');
-  const distanceValid = params.DOK === '1' && distance !== null;
-
-  setStatus(
-    'tofStatus',
-    distanceValid,
-    'VALID',
-    'UNAVAILABLE'
-  );
-
-  document.getElementById('hudTof').textContent =
-    distanceValid ? Math.round(distance) + ' mm' : 'Unavailable';
-
-  const banner = document.getElementById('hudObstacleBanner');
-
-  if (!distanceValid) {
-    banner.textContent = 'RANGE UNKNOWN';
-    banner.className =
-      'mt-2 p-2 rounded bg-slate-900 text-center text-xs font-bold text-slate-400';
-  } else if (distance < OBSTACLE_DISTANCE_MM) {
-    banner.textContent = 'OBSTACLE NEAR';
-    banner.className =
-      'mt-2 p-2 rounded bg-rose-500/20 border border-rose-500/40 text-center text-xs font-bold text-rose-400';
-  } else {
-    banner.textContent = 'OBSTACLE CLEAR';
-    banner.className =
-      'mt-2 p-2 rounded bg-slate-900 text-center text-xs font-bold text-slate-400';
-  }
-
-  // Keep the actual status visible; don't overwrite it with a
-  // generic "CONNECTED" label on every telemetry packet.
-  const connStatus = document.getElementById('connStatus');
-  connStatus.textContent =
-    params.IMU === '1' && params.CAL === '1'
-      ? 'CONNECTED · IMU READY'
-      : 'CONNECTED · CHECK IMU';
-}
-
-// ============================================================
-// VIRTUAL JOYSTICKS
-// Pointer events support touch, mouse, and stylus.
-// ============================================================
-
-function setupVirtualJoystick(canvasId, containerId, onUpdate, options = {}) {
-  const canvas = document.getElementById(canvasId);
-  const container = document.getElementById(containerId);
-  const ctx = canvas.getContext('2d');
-
-  let width = 0;
-  let height = 0;
-  let radius = 1;
-
-  let activePointer = null;
-  let posX = 0;
-  let posY = options.initialY ?? 0;
-
-  function resize() {
-    const rect = container.getBoundingClientRect();
-    const dpr = Math.max(1, window.devicePixelRatio || 1);
-
-    width = Math.max(1, rect.width);
-    height = Math.max(1, rect.height);
-
-    canvas.width = Math.round(width * dpr);
-    canvas.height = Math.round(height * dpr);
-
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    radius = Math.max(10, Math.min(width, height) * 0.36);
-    draw();
-  }
-
-  function draw() {
-    ctx.clearRect(0, 0, width, height);
-
-    const cx = width / 2;
-    const cy = height / 2;
-
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(15,23,42,.8)';
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(6,182,212,.55)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(cx - radius, cy);
-    ctx.lineTo(cx + radius, cy);
-    ctx.moveTo(cx, cy - radius);
-    ctx.lineTo(cx, cy + radius);
-    ctx.strokeStyle = 'rgba(255,255,255,.15)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    // Small tick marks at 50% deflection.
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius * 0.5, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(255,255,255,.08)';
-    ctx.stroke();
-
-    const kx = cx + posX * radius;
-    const ky = cy + posY * radius;
-
-    ctx.beginPath();
-    ctx.arc(kx, ky, radius * 0.30, 0, Math.PI * 2);
-    ctx.fillStyle = activePointer !== null
-      ? 'rgba(6,182,212,.9)'
-      : 'rgba(51,65,85,.95)';
-    ctx.fill();
-
-    ctx.strokeStyle = '#22d3ee';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-  }
-
-  function updateFromPointer(event) {
-    const rect = canvas.getBoundingClientRect();
-
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-
-    let dx = event.clientX - cx;
-    let dy = event.clientY - cy;
-
-    const length = Math.hypot(dx, dy);
-
-    if (length > radius) {
-      dx = dx / length * radius;
-      dy = dy / length * radius;
+    function setPosition(nx, ny) {
+      x = clamp(nx, -1, 1);
+      y = clamp(ny, -1, 1);
+      knob.style.left = `${38.5 + x * 30}%`;
+      knob.style.top = `${38.5 + y * 30}%`;
+      onChange(x, y);
     }
 
-    posX = Math.max(-1, Math.min(1, dx / radius));
-    posY = Math.max(-1, Math.min(1, dy / radius));
-
-    draw();
-    onUpdate(posX, posY);
-  }
-
-  canvas.addEventListener('pointerdown', event => {
-    if (activePointer !== null) return;
-
-    event.preventDefault();
-    activePointer = event.pointerId;
-    canvas.setPointerCapture(event.pointerId);
-
-    updateFromPointer(event);
-    draw();
-  });
-
-  canvas.addEventListener('pointermove', event => {
-    if (event.pointerId !== activePointer) return;
-
-    event.preventDefault();
-    updateFromPointer(event);
-  });
-
-  function releasePointer(event) {
-    if (event.pointerId !== activePointer) return;
-
-    activePointer = null;
-
-    if (options.autoCenterX) posX = 0;
-
-    if (options.releaseY) {
-      posY = options.releaseY();
-    } else if (options.autoCenterY) {
-      posY = 0;
+    function move(e) {
+      if (!active || e.pointerId !== pointerId) return;
+      const rect = el.getBoundingClientRect();
+      const radius = Math.min(rect.width, rect.height) * 0.34;
+      let nx = (e.clientX - center.x) / radius;
+      let ny = (e.clientY - center.y) / radius;
+      const mag = Math.hypot(nx, ny);
+      if (mag > 1) { nx /= mag; ny /= mag; }
+      setPosition(nx, ny);
     }
 
-    draw();
-    onUpdate(posX, posY);
+    function down(e) {
+      e.preventDefault();
+      active = true;
+      pointerId = e.pointerId;
+      const r = el.getBoundingClientRect();
+      center = {x:r.left + r.width/2, y:r.top + r.height/2};
+      el.setPointerCapture(pointerId);
+      move(e);
+    }
+
+    function up(e) {
+      if (!active || e.pointerId !== pointerId) return;
+      active = false;
+      pointerId = null;
+      release(x, y, setPosition);
+    }
+
+    el.addEventListener("pointerdown", down);
+    el.addEventListener("pointermove", move);
+    el.addEventListener("pointerup", up);
+    el.addEventListener("pointercancel", up);
+
+    return {
+      setPosition,
+      reset() { setPosition(0, 0); }
+    };
   }
 
-  canvas.addEventListener('pointerup', releasePointer);
-  canvas.addEventListener('pointercancel', releasePointer);
-  canvas.addEventListener('lostpointercapture', event => {
-    if (event.pointerId === activePointer) {
-      activePointer = null;
-
-      if (options.autoCenterX) posX = 0;
-
-      if (options.releaseY) {
-        posY = options.releaseY();
-      } else if (options.autoCenterY) {
-        posY = 0;
-      }
-
-      draw();
-      onUpdate(posX, posY);
+  const leftStick = makeStick("leftStick", (x, y) => {
+    inputs.yaw = round(x * 100);
+    // Top = higher throttle, bottom = zero throttle.
+    inputs.throttle = round(clamp((1 - y) / 2, 0, 1) * 100);
+    updateReadouts();
+  }, (x, y, setPosition) => {
+    if ($("holdThrottle").checked) {
+      // Preserve throttle position, but recenter yaw.
+      setPosition(0, y);
+    } else {
+      setPosition(0, 1);
     }
   });
 
-  const observer = new ResizeObserver(resize);
-  observer.observe(container);
+  const rightStick = makeStick("rightStick", (x, y) => {
+    inputs.roll = round(x * 100);
+    inputs.pitch = round(-y * 100);
+    updateReadouts();
+  }, (_x, _y, setPosition) => setPosition(0, 0));
 
-  function reset() {
-    activePointer = null;
-    posX = 0;
-    posY = options.resetY ?? 0;
-    draw();
-    onUpdate(posX, posY);
+  function updateReadouts() {
+    $("leftReadout").textContent =
+      `Yaw ${inputs.yaw} · Throttle ${inputs.throttle}%`;
+    $("rightReadout").textContent =
+      `Roll ${inputs.roll} · Pitch ${inputs.pitch}`;
   }
 
-  resize();
-
-  return { reset };
-}
-
-// LEFT JOYSTICK:
-// X = yaw (-100 to +100).
-// Y = throttle; bottom is 0%, top is 100%.
-// With Hold Throttle checked, the last vertical position is retained.
-// With it unchecked, release returns to the bottom (zero throttle).
-
-window.leftStick = setupVirtualJoystick(
-  'leftJoystickCanvas',
-  'leftJoystickBox',
-  (x, y) => {
-    joyState.yaw = Math.round(x * 100);
-
-    // Bottom y=+1 => 0%; top y=-1 => 100%.
-    joyState.throttle = Math.round(
-      Math.max(0, Math.min(100, ((1 - y) / 2) * 100))
-    );
-
-    updateJoystickReadouts();
-  },
-  {
-    initialY: 1,
-    resetY: 1,
-    autoCenterX: true,
-    autoCenterY: false,
-    releaseY: () =>
-      document.getElementById('throttleHoldToggle').checked
-        ? undefined
-        : 1
+  function centerControls() {
+    inputs = { roll:0, pitch:0, yaw:0, throttle:0 };
+    leftStick.setPosition(0, 1);
+    rightStick.setPosition(0, 0);
+    updateReadouts();
+    log("Local controls centered.");
   }
-);
 
-// RIGHT JOYSTICK:
-// X = roll; up = positive pitch.
-window.rightStick = setupVirtualJoystick(
-  'rightJoystickCanvas',
-  'rightJoystickBox',
-  (x, y) => {
-    joyState.roll = Math.round(x * 100);
-    joyState.pitch = Math.round(-y * 100);
-    updateJoystickReadouts();
-  },
-  {
-    initialY: 0,
-    resetY: 0,
-    autoCenterX: true,
-    autoCenterY: true
-  }
-);
+  $("connectBtn").addEventListener("click", connect);
+  $("disconnectBtn").addEventListener("click", disconnect);
+  $("armBtn").addEventListener("click", requestArm);
+  $("disarmBtn").addEventListener("click", requestDisarm);
+  $("stopBtn").addEventListener("click", stopNow);
+  $("centerBtn").addEventListener("click", centerControls);
+  $("refreshBtn").addEventListener("click", () => $("log").textContent = "");
 
-// Hold checkbox: if unchecked while throttle is elevated,
-// return the throttle stick to its zero position.
-document.getElementById('throttleHoldToggle').addEventListener(
-  'change',
-  event => {
-    if (!event.target.checked) {
-      window.leftStick.reset();
-    }
-  }
-);
-
-// ============================================================
-// LOG WINDOW
-// ============================================================
-
-function toggleLogModal() {
-  const modal = document.getElementById('logModal');
-  modal.classList.toggle('hidden');
-  modal.classList.toggle('flex');
-}
-
-document.getElementById('logBtn').addEventListener('click', toggleLogModal);
-document.getElementById('closeLogBtn').addEventListener('click', toggleLogModal);
-
-document.getElementById('clearLogBtn').addEventListener('click', () => {
-  document.getElementById('rawLogConsole').textContent = '';
-});
-
-// ============================================================
-// CONNECTION WATCHDOG FOR THE UI
-// The ESP32 firmware independently enforces its own timeout.
-// ============================================================
-
-setInterval(() => {
-  if (!isConnected) return;
-
-  if (Date.now() - lastTelemetryAt > 3000) {
-    document.getElementById('connStatus').textContent =
-      'CONNECTED · NO TELEMETRY';
-  }
-}, 500);
-
-// ============================================================
-// INITIAL STATE
-// ============================================================
-
-zeroControls();
-setConnectionUI(false);
-
-logToConsole('Controller loaded.');
-logToConsole('BLE target: ' + BLE_NAME);
-logToConsole('Motor safety depends on the ESP32 firmware.');
+  updateConnectionUI();
+  centerControls();
+  log("Controller page ready. Connect to S3_Quad_PWM.");
+})();
 </script>
 </body>
 </html>
