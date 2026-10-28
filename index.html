@@ -1,675 +1,408 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ESP32-S3 Quadcopter Joy-Con Flight Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    * {
-      user-select: none;
-      -webkit-user-select: none;
-      touch-action: manipulation;
-    }
-    body, html {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background-color: #030712;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-    
-    /* Neon Glow Effect Classes */
-    .glow-red { box-shadow: 0 0 20px rgba(239, 68, 68, 0.45); }
-    .glow-green { box-shadow: 0 0 20px rgba(34, 197, 94, 0.45); }
-    .glow-cyan { box-shadow: 0 0 20px rgba(6, 182, 212, 0.45); }
-    .glow-amber { box-shadow: 0 0 20px rgba(245, 158, 11, 0.45); }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Kattanlabs S3 Quad HUD</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #030712;
+  --panel: rgba(15, 23, 42, 0.75);
+  --border: rgba(30, 41, 59, 0.8);
+  --cyan: #06b6d4;
+  --cyan-glow: rgba(6, 182, 212, 0.25);
+  --green: #10b981;
+  --green-glow: rgba(16, 185, 129, 0.3);
+  --red: #ef4444;
+  --red-glow: rgba(239, 68, 68, 0.3);
+  --text: #f8fafc;
+  --muted: #64748b;
+}
 
-    /* Glassmorphic Panel Cards */
-    .glass-card {
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
+* { box-sizing: border-box; user-select: none; -webkit-user-select: none; touch-action: none; }
 
-    /* Joystick Styling */
-    .joycon-deck {
-      background: radial-gradient(circle at center, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.9) 100%);
-      border: 1px solid rgba(56, 189, 248, 0.2);
-    }
-    .joystick-container {
-      touch-action: none;
-    }
+body {
+  margin: 0; padding: 10px; background: var(--bg); color: var(--text);
+  font: 13px/1.4 system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overflow: hidden; height: 100vh; display: flex; flex-direction: column;
+}
 
-    /* Horizon Indicator Clip */
-    .horizon-clip {
-      clip-path: circle(42% at 50% 50%);
-    }
-  </style>
+main {
+  max-width: 950px; width: 100%; margin: auto; display: flex; flex-direction: column; gap: 8px; height: 100%; justify-content: space-between;
+}
+
+header {
+  display: flex; justify-content: space-between; align-items: center;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 10px 14px;
+  backdrop-filter: blur(12px);
+}
+
+.title-area h1 { font-size: 15px; margin: 0; font-weight: 800; letter-spacing: 0.05em; color: #e2e8f0; }
+.title-area p { font-size: 10px; margin: 0; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+
+.badges { display: flex; gap: 6px; align-items: center; }
+.badge {
+  padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; font-family: ui-monospace, monospace;
+  background: #1e293b; color: var(--muted); border: 1px solid var(--border);
+}
+.badge.good { background: var(--green-glow); color: var(--green); border-color: rgba(16,185,129,0.4); box-shadow: 0 0 10px var(--green-glow); }
+.badge.bad { background: var(--red-glow); color: var(--red); border-color: rgba(239,68,68,0.4); }
+
+.control-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 8px 12px;
+}
+
+button {
+  border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px;
+  color: var(--text); background: #1e293b; font-size: 11px; font-weight: 700;
+  cursor: pointer; transition: all 0.1s ease; text-transform: uppercase; letter-spacing: 0.05em;
+}
+button:active { transform: scale(0.96); }
+button:disabled { opacity: 0.3; cursor: not-allowed; }
+.btn-primary { background: #0891b2; border-color: #0e7490; color: #fff; box-shadow: 0 0 12px rgba(8,145,178,0.4); }
+.btn-safe { background: #065f46; border-color: #047857; color: #34d399; box-shadow: 0 0 12px rgba(6,95,70,0.4); }
+.btn-danger { background: #991b1b; border-color: #b91c1c; color: #fca5a5; box-shadow: 0 0 12px rgba(153,27,27,0.4); }
+
+.telemetry-grid {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px;
+}
+.metric {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px;
+}
+.metric .label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.metric .value { font-size: 15px; font-weight: 800; font-family: ui-monospace, monospace; color: var(--cyan); margin-top: 2px; }
+
+.workspace {
+  display: grid; grid-template-columns: 1fr 240px 1fr; gap: 10px; flex: 1; min-height: 0;
+}
+
+.stick-panel {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 12px;
+  display: flex; flex-direction: column; align-items: center; justify-content: space-between; text-align: center;
+}
+.stick-panel h2 { font-size: 11px; margin: 0; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+
+.stick {
+  position: relative; width: 100%; max-width: 190px; aspect-ratio: 1;
+  margin: auto; border: 2px solid #1e293b; border-radius: 50%;
+  background: radial-gradient(circle, #0f172a 0%, #020617 100%);
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 0 15px rgba(6,182,212,0.05);
+}
+.stick::before {
+  content: ""; position: absolute; inset: 22%; border: 1px dashed rgba(100,116,139,0.3); border-radius: 50%;
+}
+.stick::after {
+  content: ""; position: absolute; top: 50%; left: 10%; right: 10%; height: 1px; background: rgba(100,116,139,0.2);
+}
+.stick-vert {
+  position: absolute; top: 10%; bottom: 10%; left: 50%; width: 1px; background: rgba(100,116,139,0.2);
+}
+
+.knob {
+  position: absolute; width: 34%; aspect-ratio: 1; border-radius: 50%;
+  left: 33%; top: 33%; background: linear-gradient(135deg, #06b6d4, #0891b2);
+  border: 2px solid #cffafe; box-shadow: 0 0 15px var(--cyan-glow);
+  pointer-events: none; transition: background 0.1s;
+}
+
+.readout { font: 11px ui-monospace, monospace; color: var(--cyan); background: rgba(2,6,23,0.6); padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border); width: 100%; }
+
+.center-hud {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 12px;
+  display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+}
+
+.horizon-box {
+  width: 90px; height: 90px; border-radius: 50%; border: 2px solid #334155; overflow: hidden; position: relative;
+  background: #020617; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+}
+.horizon-bar {
+  width: 140px; height: 140px; background: linear-gradient(to bottom, rgba(6,182,212,0.4) 50%, rgba(245,158,11,0.4) 50%);
+  position: absolute; top: -25px; left: -25px; transition: transform 0.05s linear;
+  display: flex; align-items: center; justify-content: center;
+}
+.horizon-bar::after { content: ""; width: 100%; height: 2px; background: #22d3ee; box-shadow: 0 0 8px #22d3ee; }
+.crosshair { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.crosshair div { width: 10px; height: 10px; border: 2px solid var(--green); border-radius: 50%; }
+
+.console-panel {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 8px 12px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.console-header { display: flex; justify-content: space-between; align-items: center; font-size: 10px; font-weight: 800; color: var(--muted); letter-spacing: 0.05em; }
+#log {
+  height: 60px; overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere;
+  background: #020617; padding: 6px 8px; border-radius: 6px;
+  font: 10px/1.2 ui-monospace, monospace; color: #94a3b8; border: 1px solid var(--border);
+}
+</style>
 </head>
-<body class="text-slate-100 flex flex-col h-screen w-screen overflow-hidden select-none">
-
-  <!-- TOP HUD HEADER BAR -->
-  <header class="glass-card z-30 px-3 sm:px-5 py-2.5 border-b border-slate-800 flex items-center justify-between gap-2 shrink-0">
-    <!-- Left: BLE Connection Button & Indicator -->
-    <div class="flex items-center gap-2 sm:gap-3">
-      <button id="connectBtn" onclick="toggleConnect()" class="px-3.5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 active:scale-95 transition text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-cyan-950/50 border border-cyan-400/30">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 17l6-5-6-5m12 10l-6-5 6-5"></path></svg>
-        <span id="connectBtnText">Connect BLE</span>
-      </button>
-
-      <div class="flex items-center gap-2 text-xs bg-slate-900/80 px-2.5 py-1.5 rounded-lg border border-slate-800">
-        <span id="connIndicator" class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span>
-        <span id="connStatus" class="font-mono text-slate-400 hidden sm:inline">DISCONNECTED</span>
-      </div>
+<body>
+<main>
+  <!-- TOP HEADER -->
+  <header>
+    <div class="title-area">
+      <h1>S3 QUADCOPTER HUD</h1>
+      <p>Kattanlabs Flight Deck</p>
     </div>
-
-    <!-- Center: Main Flight Telemetry Pill -->
-    <div class="flex items-center gap-2 sm:gap-4 font-mono text-xs bg-slate-950/90 px-3 sm:px-4 py-1.5 rounded-full border border-slate-800">
-      <div class="flex items-center gap-1.5" title="Hardware Output Switch">
-        <span class="text-[10px] text-slate-500">HW OUT:</span>
-        <strong id="hudHwOut" class="text-amber-400">DISABLED</strong>
-      </div>
-      <div class="h-3 w-px bg-slate-800"></div>
-      <div class="flex items-center gap-1.5" title="Motor Throttle Command">
-        <span class="text-[10px] text-slate-500">THR:</span>
-        <strong id="hudThrottle" class="text-cyan-400">0%</strong>
-      </div>
-      <div class="h-3 w-px bg-slate-800"></div>
-      <div id="hudArmBadge" class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-400 border border-rose-500/30 uppercase tracking-widest">
-        DISARMED
-      </div>
-    </div>
-
-    <!-- Right: Status Badges & Log Trigger -->
-    <div class="flex items-center gap-2">
-      <div class="hidden lg:flex items-center gap-1.5 font-mono text-[11px]">
-        <span id="badgeImu" class="px-2 py-0.5 rounded bg-slate-800 text-slate-500 border border-slate-700">IMU: OFF</span>
-        <span id="badgeCal" class="px-2 py-0.5 rounded bg-slate-800 text-slate-500 border border-slate-700">CAL: UNK</span>
-      </div>
-
-      <button onclick="toggleLogModal()" class="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition border border-slate-700/50" title="Console Logs">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 17l6-6-6-6m8 14h8"></path></svg>
-      </button>
+    <div class="badges">
+      <span id="connection" class="badge bad">DISCONNECTED</span>
+      <span id="armStatus" class="badge">DISARMED</span>
     </div>
   </header>
 
-  <!-- MAIN HUD DASHBOARD VIEWPORT -->
-  <main class="flex-1 relative flex flex-col md:flex-row overflow-hidden p-2 sm:p-4 gap-2 sm:gap-4">
-    
-    <!-- LEFT JOY-CON DECK: THROTTLE & YAW -->
-    <section class="flex-1 glass-card joycon-deck rounded-3xl p-3.5 flex flex-col relative overflow-hidden shadow-2xl">
-      <div class="flex items-center justify-between border-b border-slate-800/80 pb-2 mb-2">
-        <div class="flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
-          <span class="text-xs font-black uppercase tracking-widest text-cyan-300">Left Joy-Con (Throttle / Yaw)</span>
-        </div>
-        
-        <!-- Throttle Hold Toggle -->
-        <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-400 bg-slate-900/80 px-2.5 py-1 rounded-lg border border-slate-800 hover:border-slate-700 transition">
-          <input type="checkbox" id="throttleHoldToggle" checked onchange="toggleThrottleHold(this.checked)" class="rounded bg-slate-800 border-slate-700 text-cyan-500 focus:ring-0">
-          <span class="text-[11px] font-semibold">Throttle Position Lock</span>
-        </label>
-      </div>
-
-      <!-- Emergency Cutoff Button -->
-      <div class="mb-2">
-        <button onclick="sendImmediateCmd('STOP')" class="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 active:scale-95 transition font-black tracking-widest text-white uppercase text-xs flex items-center justify-center gap-2 glow-red border border-rose-400/40">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
-          EMERGENCY KILL SWITCH
-        </button>
-      </div>
-
-      <!-- Left Virtual Joystick Canvas Box -->
-      <div class="flex-1 relative flex items-center justify-center joystick-container my-1" id="leftJoystickBox">
-        <canvas id="leftJoystickCanvas" class="w-full h-full block"></canvas>
-      </div>
-
-      <!-- Left Joy-Con Readouts -->
-      <div class="grid grid-cols-2 gap-2 mt-2 font-mono text-center text-xs">
-        <div class="bg-slate-950/80 p-2 rounded-xl border border-slate-800/80">
-          <span class="text-slate-500 block text-[10px]">YAW AXIS</span>
-          <span id="readoutYaw" class="text-cyan-400 font-bold text-sm">0</span>
-        </div>
-        <div class="bg-slate-950/80 p-2 rounded-xl border border-slate-800/80">
-          <span class="text-slate-500 block text-[10px]">THROTTLE</span>
-          <span id="readoutThrottle" class="text-cyan-400 font-bold text-sm">0%</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- CENTER FLIGHT ATTITUDE & SAFETY HUD OVERLAY -->
-    <section class="w-full md:w-80 flex flex-col gap-2.5 shrink-0 justify-between">
-      
-      <!-- Master Arming Safety Control -->
-      <div class="glass-card rounded-3xl p-3.5 flex flex-col gap-2.5 shadow-2xl">
-        <div class="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
-          <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Master Arming Lock</span>
-          <span id="armStatePill" class="text-[10px] font-mono text-slate-500">LOCKED</span>
-        </div>
-        
-        <div class="grid grid-cols-2 gap-2">
-          <button id="armBtn" onclick="sendImmediateCmd('ARM')" class="py-3 px-3 rounded-xl bg-emerald-600/25 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/50 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition active:scale-95 glow-green">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-            ARM
-          </button>
-          <button onclick="sendImmediateCmd('DISARM')" class="py-3 px-3 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition active:scale-95">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-            DISARM
-          </button>
-        </div>
-      </div>
-
-      <!-- Synthetic Artificial Horizon Gauge -->
-      <div class="glass-card rounded-3xl p-3.5 flex flex-col items-center justify-center relative overflow-hidden h-40 shadow-2xl">
-        <span class="text-[10px] font-black uppercase tracking-widest text-slate-400 absolute top-3 left-3">Attitude Fusion</span>
-        
-        <div class="w-28 h-28 rounded-full border-2 border-slate-700/80 relative overflow-hidden flex items-center justify-center bg-slate-950 shadow-inner horizon-clip">
-          <div id="horizonBar" class="w-36 h-36 bg-gradient-to-b from-cyan-900/70 via-cyan-500/80 to-amber-900/70 absolute transition-transform duration-75 flex items-center justify-center" style="transform: translateY(0px) rotate(0deg);">
-            <div class="w-full h-0.5 bg-cyan-200 shadow-[0_0_10px_#38bdf8]"></div>
-          </div>
-          <div class="w-4 h-4 border-2 border-emerald-400 rounded-full z-10 relative"></div>
-          <div class="w-16 h-0.5 bg-emerald-400/60 z-10 absolute"></div>
-        </div>
-
-        <div class="flex justify-between w-full px-4 mt-1.5 font-mono text-[11px]">
-          <div>ROLL: <span id="hudRoll" class="text-cyan-400 font-bold">0.0°</span></div>
-          <div>PITCH: <span id="hudPitch" class="text-cyan-400 font-bold">0.0°</span></div>
-        </div>
-      </div>
-
-      <!-- ToF Distance Sensor & Gyro Diagnostics -->
-      <div class="glass-card rounded-3xl p-3.5 flex flex-col gap-2.5 shadow-2xl">
-        <div class="flex items-center justify-between font-mono">
-          <span class="text-xs text-slate-400 font-sans font-bold uppercase">ToF Rangefinder</span>
-          <span id="hudTof" class="text-sm font-bold text-cyan-400">8190 mm</span>
-        </div>
-
-        <div class="bg-slate-950/80 rounded-xl p-2 border border-slate-800 text-[11px] font-mono flex justify-between">
-          <span class="text-slate-500">GYRO (dps):</span>
-          <span id="hudGyro" class="text-slate-300">0.0 / 0.0 / 0.0</span>
-        </div>
-      </div>
-
-    </section>
-
-    <!-- RIGHT JOY-CON DECK: PITCH & ROLL -->
-    <section class="flex-1 glass-card joycon-deck rounded-3xl p-3.5 flex flex-col relative overflow-hidden shadow-2xl">
-      <div class="flex items-center justify-between border-b border-slate-800/80 pb-2 mb-2">
-        <div class="flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
-          <span class="text-xs font-black uppercase tracking-widest text-cyan-300">Right Joy-Con (Pitch / Roll)</span>
-        </div>
-        <span class="text-[10px] text-slate-500 font-semibold bg-slate-900/80 px-2 py-0.5 rounded border border-slate-800">Spring Recoil Centering</span>
-      </div>
-
-      <!-- Right Virtual Joystick Canvas Box -->
-      <div class="flex-1 relative flex items-center justify-center joystick-container my-1" id="rightJoystickBox">
-        <canvas id="rightJoystickCanvas" class="w-full h-full block"></canvas>
-      </div>
-
-      <!-- Right Joy-Con Readouts -->
-      <div class="grid grid-cols-2 gap-2 mt-2 font-mono text-center text-xs">
-        <div class="bg-slate-950/80 p-2 rounded-xl border border-slate-800/80">
-          <span class="text-slate-500 block text-[10px]">ROLL AXIS</span>
-          <span id="readoutRoll" class="text-cyan-400 font-bold text-sm">0</span>
-        </div>
-        <div class="bg-slate-950/80 p-2 rounded-xl border border-slate-800/80">
-          <span class="text-slate-500 block text-[10px]">PITCH AXIS</span>
-          <span id="readoutPitch" class="text-cyan-400 font-bold text-sm">0</span>
-        </div>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- COLLAPSIBLE RAW TELEMETRY LOG MODAL -->
-  <div id="logModal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md p-4 flex flex-col items-center justify-center">
-    <div class="glass-card w-full max-w-3xl h-3/4 rounded-3xl p-5 flex flex-col border border-slate-700 shadow-2xl">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
-        <div class="flex items-center gap-2">
-          <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-          <span class="text-sm font-black uppercase tracking-wider text-slate-200">Nordic UART BLE Diagnostics & Raw Telemetry</span>
-        </div>
-        <button onclick="toggleLogModal()" class="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white font-bold transition">✕</button>
-      </div>
-      
-      <pre id="rawLogConsole" class="flex-1 bg-slate-950 p-4 rounded-2xl border border-slate-800/80 font-mono text-[11px] text-emerald-400 overflow-y-auto whitespace-pre-wrap select-text leading-relaxed"></pre>
-      
-      <div class="mt-3 flex justify-end gap-2">
-        <button onclick="document.getElementById('rawLogConsole').innerText=''" class="px-4 py-2 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 hover:bg-slate-700 transition">Clear Console</button>
-        <button onclick="toggleLogModal()" class="px-4 py-2 rounded-xl bg-cyan-600 text-xs font-bold text-white hover:bg-cyan-500 transition shadow-lg shadow-cyan-950">Close</button>
-      </div>
+  <!-- ACTION CONTROL BAR -->
+  <div class="control-bar">
+    <div style="display:flex; gap:6px;">
+      <button id="connectBtn" class="btn-primary">Connect BLE</button>
+      <button id="disconnectBtn">Disconnect</button>
+    </div>
+    <div style="display:flex; gap:6px;">
+      <button id="armBtn" class="btn-safe" disabled>ARM</button>
+      <button id="disarmBtn" disabled>DISARM</button>
+      <button id="stopBtn" class="btn-danger" disabled>STOP</button>
     </div>
   </div>
 
-  <script>
-    // --- STATE MANAGEMENT & CONSTANTS ---
-    let bluetoothDevice = null;
-    let rxCharacteristic = null;
-    let txCharacteristic = null;
-    let isConnected = false;
-    let throttleHold = true;
+  <!-- TELEMETRY METRICS -->
+  <div class="telemetry-grid">
+    <div class="metric"><div class="label">Roll / Pitch</div><div class="value" id="attitude">0.0° / 0.0°</div></div>
+    <div class="metric"><div class="label">ToF Distance</div><div class="value" id="distance">8190 mm</div></div>
+    <div class="metric"><div class="label">Throttle PWM</div><div class="value" id="throttleReported">0 (0%)</div></div>
+    <div class="metric"><div class="label">IMU Status</div><div class="value" id="imuBadge" style="color:var(--muted)">READY</div></div>
+  </div>
 
-    // Joystick Control Vector (-100 to +100, Throttle 0 to 100)
-    let joyState = {
-      roll: 0,
-      pitch: 0,
-      yaw: 0,
-      throttle: 0
-    };
+  <!-- WORKSPACE: DUAL JOY-CONS + ARTIFICIAL HORIZON -->
+  <section class="workspace">
+    <!-- LEFT STICK -->
+    <div class="stick-panel">
+      <h2>Throttle / Yaw</h2>
+      <div class="stick" id="leftStick">
+        <div class="stick-vert"></div>
+        <div class="knob"></div>
+      </div>
+      <div class="readout" id="leftReadout">Yaw: 0 | Thr: 0%</div>
+      <label style="font-size:10px; color:var(--muted); display:flex; align-items:center; gap:4px; cursor:pointer;">
+        <input type="checkbox" id="holdThrottle" checked style="accent-color:var(--cyan);"> Hold Throttle
+      </label>
+    </div>
 
-    // Nordic UART Service UUIDs
-    const SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
-    const RX_UUID      = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
-    const TX_UUID      = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
+    <!-- CENTER FLIGHT DATA HUD -->
+    <div class="center-hud">
+      <span style="font-size:9px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em;">Attitude Fusion</span>
+      <div class="horizon-box">
+        <div class="horizon-bar" id="horizonBar"></div>
+        <div class="crosshair"><div></div></div>
+      </div>
+      <div style="font-family:ui-monospace,monospace; font-size:11px; color:var(--cyan);" id="gyroReadout">GX:0 GY:0 GZ:0</div>
+    </div>
 
-    // --- BLE CONNECTION LOGIC ---
-    async function toggleConnect() {
-      if (isConnected) {
-        disconnectBLE();
-        return;
-      }
+    <!-- RIGHT STICK -->
+    <div class="stick-panel">
+      <h2>Roll / Pitch</h2>
+      <div class="stick" id="rightStick">
+        <div class="stick-vert"></div>
+        <div class="knob"></div>
+      </div>
+      <div class="readout" id="rightReadout">Roll: 0 | Pitch: 0</div>
+    </div>
+  </section>
 
-      try {
-        logToConsole("Requesting Web Bluetooth device [S3_Quad_PWM]...");
-        bluetoothDevice = await navigator.bluetooth.requestDevice({
-          filters: [{ name: 'S3_Quad_PWM' }],
-          optionalServices: [SERVICE_UUID]
-        });
+  <!-- DIAGNOSTIC CONSOLE -->
+  <section class="console-panel">
+    <div class="console-header">
+      <span>TELEMETRY & BLE STREAM</span>
+      <button id="refreshBtn" style="padding:1px 6px; font-size:9px;">Clear</button>
+    </div>
+    <div id="log"></div>
+  </section>
+</main>
 
-        bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
+<script>
+  const SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+  const RX_UUID      = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
+  const TX_UUID      = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
 
-        logToConsole("Establishing GATT server connection...");
-        const server = await bluetoothDevice.gatt.connect();
+  let bluetoothDevice = null, rxCharacteristic = null, txCharacteristic = null, isConnected = false;
+  let joyState = { roll: 0, pitch: 0, yaw: 0, throttle: 0 };
+  const logEl = document.getElementById('log');
 
-        logToConsole("Resolving Nordic UART Primary Service...");
-        const service = await server.getPrimaryService(SERVICE_UUID);
+  function logMessage(msg) {
+    logEl.textContent += `[${new Date().toLocaleTimeString()}] ${msg}\n`;
+    logEl.scrollTop = logEl.scrollHeight;
+  }
 
-        logToConsole("Mapping RX and TX Characteristics...");
-        rxCharacteristic = await service.getCharacteristic(RX_UUID);
-        txCharacteristic = await service.getCharacteristic(TX_UUID);
-
-        logToConsole("Subscribing to TX Telemetry Notifications...");
-        await txCharacteristic.startNotifications();
-        txCharacteristic.addEventListener('characteristicvaluechanged', handleTelemetryNotification);
-
-        setConnectedUI(true);
-        logToConsole("BLE Link established successfully!");
-      } catch (error) {
-        logToConsole("BLE Connection Error: " + error);
-        setConnectedUI(false);
-      }
-    }
-
-    function disconnectBLE() {
-      if (bluetoothDevice && bluetoothDevice.gatt.connected) {
-        bluetoothDevice.gatt.disconnect();
-      }
-      setConnectedUI(false);
-    }
-
-    function onDisconnected() {
-      logToConsole("BLE Gateway Disconnected!");
-      setConnectedUI(false);
-    }
-
-    function setConnectedUI(connected) {
-      isConnected = connected;
-      const btnText = document.getElementById('connectBtnText');
-      const connIndicator = document.getElementById('connIndicator');
-      const connStatus = document.getElementById('connStatus');
-
-      if (connected) {
-        btnText.innerText = "Disconnect";
-        connIndicator.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block glow-green";
-        connStatus.innerText = "CONNECTED";
-        connStatus.className = "font-mono text-emerald-400 hidden sm:inline";
-      } else {
-        btnText.innerText = "Connect BLE";
-        connIndicator.className = "w-2.5 h-2.5 rounded-full bg-rose-500 inline-block";
-        connStatus.innerText = "DISCONNECTED";
-        connStatus.className = "font-mono text-slate-400 hidden sm:inline";
-      }
-    }
-
-    // --- COMMAND DISPATCHING ---
-    async function sendImmediateCmd(cmd) {
-      if (!rxCharacteristic || !isConnected) {
-        logToConsole("Command rejected [No Active BLE Session]: " + cmd);
-        return;
-      }
-      try {
-        const encoder = new TextEncoder();
-        await rxCharacteristic.writeValue(encoder.encode(cmd + "\n"));
-        logToConsole("TX -> " + cmd);
-      } catch (err) {
-        logToConsole("TX Dispatch Error: " + err);
-      }
-    }
-
-    // 40Hz Continuous Command Loop (25ms stream)
-    setInterval(() => {
-      if (isConnected) {
-        const cmd = `J,${joyState.roll},${joyState.pitch},${joyState.yaw},${joyState.throttle}`;
-        sendSilentStream(cmd);
-      }
-    }, 25);
-
-    async function sendSilentStream(cmd) {
-      if (!rxCharacteristic || !isConnected) return;
-      try {
-        const encoder = new TextEncoder();
-        await rxCharacteristic.writeValue(encoder.encode(cmd + "\n"));
-      } catch (err) {
-        // Suppress buffer overflow logs during continuous streaming
-      }
-    }
-
-    // --- TELEMETRY PARSER ---
-    // Expected incoming string format:
-    // IMU:1,CAL:1,ARM:0,OUT:0,T:0,R:0.00,P:0.00,GX:0.00,GY:0.00,GZ:0.00,D:8190,DOK:1
-    function handleTelemetryNotification(event) {
-      const decoder = new TextDecoder('utf-8');
-      const rawStr = decoder.decode(event.target.value).trim();
-      logToConsole("RX <- " + rawStr);
-
-      const data = {};
-      rawStr.split(',').forEach(pair => {
-        const [key, val] = pair.split(':');
-        if (key && val !== undefined) {
-          data[key] = val;
-        }
+  document.getElementById('connectBtn').addEventListener('click', async () => {
+    try {
+      bluetoothDevice = await navigator.bluetooth.requestDevice({
+        filters: [{ name: 'S3_Quad_PWM' }], optionalServices: [SERVICE_UUID]
       });
-
-      // Update Hardware Output Status
-      if (data.OUT !== undefined) {
-        const hwOut = document.getElementById('hudHwOut');
-        if (data.OUT === '1') {
-          hwOut.innerText = "ENABLED";
-          hwOut.className = "text-emerald-400 font-bold";
-        } else {
-          hwOut.innerText = "DISABLED";
-          hwOut.className = "text-amber-400 font-bold";
-        }
-      }
-
-      // Update Master Arming Badge
-      if (data.ARM !== undefined) {
-        const armed = data.ARM === '1';
-        const badge = document.getElementById('hudArmBadge');
-        const pill = document.getElementById('armStatePill');
-        if (armed) {
-          badge.innerText = "ARMED";
-          badge.className = "px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 glow-green uppercase tracking-widest";
-          pill.innerText = "ACTIVE";
-          pill.className = "text-[10px] font-mono text-emerald-400 font-bold";
-        } else {
-          badge.innerText = "DISARMED";
-          badge.className = "px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-400 border border-rose-500/30 uppercase tracking-widest";
-          pill.innerText = "LOCKED";
-          pill.className = "text-[10px] font-mono text-slate-500";
-        }
-      }
-
-      // Update Reported Throttle PWM/Percent
-      if (data.T !== undefined) {
-        const tVal = parseFloat(data.T);
-        const tPct = Math.round((tVal / 255) * 100);
-        document.getElementById('hudThrottle').innerText = tPct + "%";
-      }
-
-      // Update Diagnostics Badges (IMU & Calibration)
-      if (data.IMU !== undefined) {
-        const b = document.getElementById('badgeImu');
-        b.innerText = data.IMU === '1' ? "IMU: OK" : "IMU: FAULT";
-        b.className = data.IMU === '1' ? "px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800" : "px-2 py-0.5 rounded bg-rose-950/80 text-rose-400 border border-rose-800";
-      }
-      if (data.CAL !== undefined) {
-        const b = document.getElementById('badgeCal');
-        b.innerText = data.CAL === '1' ? "CAL: OK" : "CAL: UNK";
-        b.className = data.CAL === '1' ? "px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800" : "px-2 py-0.5 rounded bg-amber-950/80 text-amber-400 border border-amber-800";
-      }
-
-      // Update Attitude Fusion Gauge (Roll & Pitch)
-      if (data.R !== undefined && data.P !== undefined) {
-        const r = parseFloat(data.R).toFixed(1);
-        const p = parseFloat(data.P).toFixed(1);
-        document.getElementById('hudRoll').innerText = r + "°";
-        document.getElementById('hudPitch').innerText = p + "°";
-
-        const horizonBar = document.getElementById('horizonBar');
-        horizonBar.style.transform = `translateY(${p * 1.5}px) rotate(${-r}deg)`;
-      }
-
-      // Update Gyro Data
-      if (data.GX !== undefined && data.GY !== undefined && data.GZ !== undefined) {
-        const gx = parseFloat(data.GX).toFixed(1);
-        const gy = parseFloat(data.GY).toFixed(1);
-        const gz = parseFloat(data.GZ).toFixed(1);
-        document.getElementById('hudGyro').innerText = `${gx} / ${gy} / ${gz}`;
-      }
-
-      // Update Rangefinder Distance
-      if (data.D !== undefined) {
-        const dVal = parseInt(data.D);
-        const isValid = data.DOK === '1';
-        document.getElementById('hudTof').innerText = isValid ? `${dVal} mm` : "Out of range";
-      }
+      bluetoothDevice.addEventListener('gattserverdisconnected', () => setConnectionState(false));
+      const server = await bluetoothDevice.gatt.connect();
+      const service = await server.getPrimaryService(SERVICE_UUID);
+      rxCharacteristic = await service.getCharacteristic(RX_UUID);
+      txCharacteristic = await service.getCharacteristic(TX_UUID);
+      await txCharacteristic.startNotifications();
+      txCharacteristic.addEventListener('characteristicvaluechanged', handleTelemetry);
+      setConnectionState(true);
+      logMessage("BLE Connected successfully.");
+    } catch (err) {
+      logMessage("Connection Error: " + err);
+      setConnectionState(false);
     }
+  });
 
-    // --- HTML5 CANVAS VIRTUAL JOY-CONS ---
-    function setupVirtualJoyCon(canvasId, containerId, onUpdate, options = {}) {
-      const canvas = document.getElementById(canvasId);
-      const container = document.getElementById(containerId);
-      const ctx = canvas.getContext('2d');
+  document.getElementById('disconnectBtn').addEventListener('click', () => {
+    if (bluetoothDevice?.gatt.connected) bluetoothDevice.gatt.disconnect();
+    setConnectionState(false);
+  });
+  document.getElementById('refreshBtn').addEventListener('click', () => logEl.textContent = '');
 
-      let width = 0, height = 0, radius = 0;
-      let active = false;
-      let touchId = null;
+  function setConnectionState(connected) {
+    isConnected = connected;
+    const badge = document.getElementById('connection');
+    badge.textContent = connected ? "CONNECTED" : "DISCONNECTED";
+    badge.className = connected ? "badge good" : "badge bad";
+    ['armBtn', 'disarmBtn', 'stopBtn'].forEach(id => {
+      document.getElementById(id).disabled = !connected;
+    });
+  }
 
-      // Joystick Vector Coordinates (-1.0 to +1.0)
-      let posX = 0, posY = options.initialY || 0;
+  async function sendCommand(cmd) {
+    if (!rxCharacteristic || !isConnected) return;
+    try {
+      await rxCharacteristic.writeValue(new TextEncoder().encode(cmd + "\n"));
+    } catch (err) {}
+  }
 
-      function resize() {
-        width = container.clientWidth;
-        height = container.clientHeight;
-        canvas.width = width;
-        canvas.height = height;
-        radius = Math.min(width, height) * 0.38;
-        draw();
-      }
+  document.getElementById('armBtn').addEventListener('click', () => sendCommand('ARM'));
+  document.getElementById('disarmBtn').addEventListener('click', () => sendCommand('DISARM'));
+  document.getElementById('stopBtn').addEventListener('click', () => sendCommand('STOP'));
 
-      window.addEventListener('resize', resize);
-      setTimeout(resize, 80);
+  function handleTelemetry(event) {
+    const raw = new TextDecoder().decode(event.target.value).trim();
+    const data = {};
+    raw.split(',').forEach(p => { const kv = p.split(':'); if(kv.length===2) data[kv[0]]=kv[1]; });
 
-      function draw() {
-        ctx.clearRect(0, 0, width, height);
-        const centerX = width / 2;
-        const centerY = height / 2;
-
-        // Outer Joy-Con Bezel Ring
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.7)';
-        ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
-        ctx.lineWidth = 3;
-        ctx.fill();
-        ctx.stroke();
-
-        // Inner Vector Radial Rings
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, radius * 0.5, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // Target Axis Crosshairs
-        ctx.beginPath();
-        ctx.moveTo(centerX - radius, centerY);
-        ctx.lineTo(centerX + radius, centerY);
-        ctx.moveTo(centerX, centerY - radius);
-        ctx.lineTo(centerX, centerY + radius);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // Active Thumbstick Center Pointer
-        const knobX = centerX + posX * radius;
-        const knobY = centerY + posY * radius;
-
-        // Dynamic Connecting Line
-        if (active || posX !== 0 || posY !== 0) {
-          ctx.beginPath();
-          ctx.moveTo(centerX, centerY);
-          ctx.lineTo(knobX, knobY);
-          ctx.strokeStyle = 'rgba(6, 182, 212, 0.5)';
-          ctx.lineWidth = 2;
-          ctx.stroke();
-        }
-
-        // Thumbstick Knob
-        ctx.beginPath();
-        ctx.arc(knobX, knobY, radius * 0.35, 0, Math.PI * 2);
-        ctx.fillStyle = active ? 'rgba(6, 182, 212, 0.9)' : 'rgba(30, 41, 59, 0.95)';
-        ctx.strokeStyle = active ? '#38bdf8' : '#0284c7';
-        ctx.lineWidth = 2.5;
-        ctx.fill();
-        ctx.stroke();
-
-        // Inner Grip Ring
-        ctx.beginPath();
-        ctx.arc(knobX, knobY, radius * 0.15, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-      }
-
-      function handleTouchStart(e) {
-        e.preventDefault();
-        if (active) return;
-        const touch = e.changedTouches[0];
-        touchId = touch.identifier;
-        active = true;
-        updatePosition(touch);
-      }
-
-      function handleTouchMove(e) {
-        e.preventDefault();
-        if (!active) return;
-        for (let i = 0; i < e.changedTouches.length; i++) {
-          if (e.changedTouches[i].identifier === touchId) {
-            updatePosition(e.changedTouches[i]);
-            break;
-          }
-        }
-      }
-
-      function handleTouchEnd(e) {
-        e.preventDefault();
-        if (!active) return;
-        for (let i = 0; i < e.changedTouches.length; i++) {
-          if (e.changedTouches[i].identifier === touchId) {
-            active = false;
-            touchId = null;
-
-            // Recoil centering behavior
-            if (options.autoCenterX) posX = 0;
-            if (options.autoCenterY) posY = 0;
-
-            draw();
-            onUpdate(posX, posY);
-            break;
-          }
-        }
-      }
-
-      function updatePosition(touch) {
-        const rect = canvas.getBoundingClientRect();
-        const centerX = rect.left + width / 2;
-        const centerY = rect.top + height / 2;
-
-        let dx = touch.clientX - centerX;
-        let dy = touch.clientY - centerY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        if (distance > radius) {
-          dx = (dx / distance) * radius;
-          dy = (dy / distance) * radius;
-        }
-
-        posX = dx / radius;
-        posY = dy / radius;
-
-        draw();
-        onUpdate(posX, posY);
-      }
-
-      // Attach Touch & Pointer Event Listeners
-      canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-      canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
-      canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
-      canvas.addEventListener('touchcancel', handleTouchEnd, { passive: false });
-
-      draw();
+    if (data.ARM !== undefined) {
+      const b = document.getElementById('armStatus');
+      b.textContent = data.ARM === '1' ? "ARMED" : "DISARMED";
+      b.className = data.ARM === '1' ? "badge good" : "badge";
     }
+    if (data.R !== undefined && data.P !== undefined) {
+      const r = parseFloat(data.R), p = parseFloat(data.P);
+      document.getElementById('attitude').textContent = `${r.toFixed(1)}° / ${p.toFixed(1)}°`;
+      document.getElementById('horizonBar').style.transform = `translateY(${p * 1.5}px) rotate(${-r}deg)`;
+    }
+    if (data.GX !== undefined && data.GY !== undefined) {
+      document.getElementById('gyroReadout').textContent = `GX:${parseFloat(data.GX).toFixed(0)} GY:${parseFloat(data.GY).toFixed(0)}`;
+    }
+    if (data.D !== undefined) {
+      document.getElementById('distance').textContent = data.DOK === '1' ? data.D + " mm" : "Out of range";
+    }
+    if (data.T !== undefined) {
+      const tVal = parseFloat(data.T);
+      document.getElementById('throttleReported').textContent = `${tVal.toFixed(0)} (${Math.round(tVal/2.55)}%)`;
+    }
+  }
 
-    // --- INITIALIZE DUAL JOY-CONS ---
-    // Left Joy-Con (Throttle Y, Yaw X)
-    setupVirtualJoyCon('leftJoystickCanvas', 'leftJoystickBox', (x, y) => {
-      joyState.yaw = Math.round(x * 100);
+  // 40Hz BLE Command Stream
+  setInterval(() => {
+    if (isConnected) sendCommand(`J,${joyState.roll},${joyState.pitch},${joyState.yaw},${joyState.throttle}`);
+  }, 40);
 
-      const hold = document.getElementById('throttleHoldToggle').checked;
-      let throttleVal = 0;
+  // Deadzone & Expo filter to eliminate hover drift
+  function applyDeadzoneAndExpo(val, deadzone = 0.12) {
+    if (Math.abs(val) < deadzone) return 0;
+    const sign = Math.sign(val);
+    const scaled = (Math.abs(val) - deadzone) / (1 - deadzone);
+    return Math.round(sign * (scaled * scaled * 0.3 + scaled * 0.7) * 100);
+  }
 
-      if (hold) {
-        // Y ranges -1 (top) to +1 (bottom). Invert and map 0-100%
-        throttleVal = Math.round(((-y + 1) / 2) * 100);
+  function initJoystick(stickId, readoutId, isThrottleYaw, options = {}) {
+    const container = document.getElementById(stickId);
+    const knob = container.querySelector('.knob');
+    const readout = document.getElementById(readoutId);
+
+    let active = false, touchId = null, posX = 0, posY = options.initialY || 0;
+
+    function update() {
+      const xPct = 33 + (posX * 33);
+      const yPct = 33 + (posY * 33);
+      knob.style.left = xPct + '%';
+      knob.style.top = yPct + '%';
+
+      if (isThrottleYaw) {
+        joyState.yaw = applyDeadzoneAndExpo(posX, 0.15);
+        const hold = document.getElementById('holdThrottle').checked;
+        let rawT = (-posY + 1) / 2;
+        if (!hold && Math.abs(posY) > 0.8) rawT = 0;
+        
+        if (-posY < 0.05 && !hold) {
+          joyState.throttle = 0;
+        } else {
+          joyState.throttle = Math.round(Math.max(0, Math.min(100, rawT * 100)));
+        }
+        readout.textContent = `Yaw: ${joyState.yaw} | Thr: ${joyState.throttle}%`;
       } else {
-        // Unlocked mode: Only positive push upwards yields throttle
-        throttleVal = Math.round(((-y) > 0 ? (-y) : 0) * 100);
+        joyState.roll = applyDeadzoneAndExpo(posX, 0.1);
+        joyState.pitch = applyDeadzoneAndExpo(-posY, 0.1);
+        readout.textContent = `Roll: ${joyState.roll} | Pitch: ${joyState.pitch}`;
       }
-
-      joyState.throttle = Math.max(0, Math.min(100, throttleVal));
-
-      document.getElementById('readoutYaw').innerText = joyState.yaw;
-      document.getElementById('readoutThrottle').innerText = joyState.throttle + "%";
-    }, { autoCenterX: true, autoCenterY: false, initialY: 1 });
-
-    // Right Joy-Con (Pitch Y, Roll X)
-    setupVirtualJoyCon('rightJoystickCanvas', 'rightJoystickBox', (x, y) => {
-      joyState.roll = Math.round(x * 100);
-      // Invert Y so pushing stick up yields positive pitch forward
-      joyState.pitch = Math.round(-y * 100);
-
-      document.getElementById('readoutRoll').innerText = joyState.roll;
-      document.getElementById('readoutPitch').innerText = joyState.pitch;
-    }, { autoCenterX: true, autoCenterY: true, initialY: 0 });
-
-    function toggleThrottleHold(enable) {
-      throttleHold = enable;
     }
 
-    // --- UI UTILITIES & CONSOLE LOGGING ---
-    function toggleLogModal() {
-      const modal = document.getElementById('logModal');
-      modal.classList.toggle('hidden');
+    function handleStart(e) {
+      e.preventDefault();
+      if (active) return;
+      const t = e.changedTouches ? e.changedTouches[0] : e;
+      active = true; touchId = t.identifier ?? null;
+      move(t);
     }
 
-    function logToConsole(msg) {
-      const consoleEl = document.getElementById('rawLogConsole');
-      const timestamp = new Date().toLocaleTimeString();
-      consoleEl.innerText += `[${timestamp}] ${msg}\n`;
-      consoleEl.scrollTop = consoleEl.scrollHeight;
+    function handleMove(e) {
+      e.preventDefault();
+      if (!active) return;
+      const touches = e.changedTouches ? Array.from(e.changedTouches) : [e];
+      for (let t of touches) {
+        if (t.identifier === touchId || touchId === null) { move(t); break; }
+      }
     }
 
-    // Register PWA Service Worker if available
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(() => {});
-      });
+    function handleEnd(e) {
+      e.preventDefault();
+      if (!active) return;
+      active = false; touchId = null;
+      posX = 0;
+      if (options.autoCenterY) posY = 0;
+      update();
     }
-  </script>
+
+    function move(t) {
+      const rect = container.getBoundingClientRect();
+      const r = rect.width / 2;
+      let dx = t.clientX - (rect.left + r);
+      let dy = t.clientY - (rect.top + r);
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist > r * 0.75) {
+        dx = (dx / dist) * (r * 0.75);
+        dy = (dy / dist) * (r * 0.75);
+      }
+      posX = dx / (r * 0.75);
+      posY = dy / (r * 0.75);
+      update();
+    }
+
+    container.addEventListener('pointerdown', handleStart);
+    window.addEventListener('pointermove', e => { if (active) handleMove(e); });
+    window.addEventListener('pointerup', e => { if (active) handleEnd(e); });
+    update();
+  }
+
+  initJoystick('leftStick', 'leftReadout', true, { initialY: 1 });
+  initJoystick('rightStick', 'rightReadout', false, { initialY: 0, autoCenterY: true });
+</script>
 </body>
 </html>
