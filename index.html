@@ -3,19 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>S3 Quad Flight Deck</title>
+<title>AVION CONTROLLER - ESP32-S3 Flight Deck</title>
 <style>
 :root {
   color-scheme: dark;
   --bg: #030712;
-  --panel: rgba(15, 23, 42, 0.9);
-  --border: rgba(30, 41, 59, 0.8);
+  --panel: rgba(15, 23, 42, 0.88);
+  --border: rgba(30, 41, 59, 0.85);
   --cyan: #06b6d4;
-  --cyan-glow: rgba(6, 182, 212, 0.3);
+  --cyan-glow: rgba(6, 182, 212, 0.35);
   --green: #10b981;
-  --green-glow: rgba(16, 185, 129, 0.3);
+  --green-glow: rgba(16, 185, 129, 0.35);
   --red: #ef4444;
-  --red-glow: rgba(239, 68, 68, 0.3);
+  --red-glow: rgba(239, 68, 68, 0.35);
   --text: #f8fafc;
   --muted: #64748b;
 }
@@ -29,42 +29,86 @@
 }
 
 body, html {
-  margin: 0; padding: 0; width: 100%; height: 100%;
+  margin: 0; padding: 0; width: 100vw; height: 100vh;
   background: var(--bg); color: var(--text);
-  font: 13px/1.4 system-ui, -apple-system, sans-serif;
+  font: 12px/1.3 system-ui, -apple-system, sans-serif;
   overflow: hidden; position: fixed;
 }
 
 main {
   display: flex; flex-direction: column; width: 100%; height: 100%;
-  padding: 8px; gap: 6px; justify-content: space-between;
+  padding: 6px 12px; gap: 6px; justify-content: space-between;
 }
 
+/* TOP HEADER & BRANDING */
 header {
   display: flex; justify-content: space-between; align-items: center;
-  background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 6px 10px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 4px 12px;
+  backdrop-filter: blur(12px); shrink: 0;
 }
 
-.title-area h1 { font-size: 13px; margin: 0; font-weight: 800; color: #e2e8f0; }
-.title-area p { font-size: 9px; margin: 0; color: var(--muted); text-transform: uppercase; }
+.brand-area { display: flex; align-items: center; gap: 8px; }
+.brand-title { font-size: 14px; font-weight: 900; letter-spacing: 0.12em; color: #38bdf8; text-transform: uppercase; }
+.brand-sub { font-size: 9px; font-weight: 700; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
 
-.badges { display: flex; gap: 4px; align-items: center; }
+.badges { display: flex; gap: 6px; align-items: center; }
 .badge {
-  padding: 3px 6px; border-radius: 4px; font-size: 9px; font-weight: 800; font-family: monospace;
+  padding: 3px 8px; border-radius: 4px; font-size: 9px; font-weight: 800; font-family: ui-monospace, monospace;
   background: #1e293b; color: var(--muted); border: 1px solid var(--border);
 }
-.badge.good { background: var(--green-glow); color: var(--green); border-color: rgba(16,185,129,0.4); }
-.badge.bad { background: var(--red-glow); color: var(--red); border-color: rgba(239,68,68,0.4); }
+.badge.good { background: var(--green-glow); color: var(--green); border-color: rgba(16,185,129,0.5); }
+.badge.bad { background: var(--red-glow); color: var(--red); border-color: rgba(239,68,68,0.5); }
 
-.control-bar {
-  display: flex; justify-content: space-between; align-items: center;
-  background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 6px 10px;
+/* METRICS DECK */
+.metrics-deck {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; shrink: 0;
+}
+.metric-card {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; text-align: center;
+}
+.metric-card .label { font-size: 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; }
+.metric-card .value { font-size: 14px; font-weight: 800; font-family: ui-monospace, monospace; color: var(--cyan); margin-top: 1px; }
+
+/* MAIN LANDSCAPE FLIGHT WORKSPACE */
+.flight-workspace {
+  display: grid; grid-template-columns: 140px 1fr 180px; gap: 10px; flex: 1; min-height: 0; align-items: center;
+}
+
+/* LEFT THROTTLE SLIDER */
+.slider-panel {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 8px;
+  display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 100%; text-align: center;
+}
+.panel-title { font-size: 9px; margin: 0; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 800; }
+
+.track {
+  position: relative; width: 44px; height: 100%; max-height: 150px;
+  margin: auto; border: 2px solid #1e293b; border-radius: 22px;
+  background: linear-gradient(180deg, #020617 0%, #0f172a 100%);
+  display: flex; justify-content: center; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+}
+.track-line { position: absolute; top: 10px; bottom: 10px; width: 3px; background: rgba(100,116,139,0.25); border-radius: 2px; }
+.slider-knob {
+  position: absolute; width: 36px; height: 36px; border-radius: 50%;
+  left: 2px; top: calc(100% - 38px); background: linear-gradient(135deg, #06b6d4, #0891b2);
+  border: 2px solid #cffafe; box-shadow: 0 0 12px var(--cyan-glow);
+  pointer-events: none;
+}
+
+/* CENTER FLIGHT INSTRUMENTS & CONTROLS */
+.center-deck {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 8px;
+  display: flex; flex-direction: column; justify-content: space-between; align-items: center; height: 100%;
+}
+
+.action-buttons {
+  display: flex; gap: 6px; width: 100%; justify-content: center;
 }
 
 button {
-  border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px;
-  color: var(--text); background: #1e293b; font-size: 11px; font-weight: 700;
-  cursor: pointer; text-transform: uppercase;
+  border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px;
+  color: var(--text); background: #1e293b; font-size: 10px; font-weight: 800;
+  cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.1s ease;
 }
 button:active { transform: scale(0.95); }
 button:disabled { opacity: 0.3; cursor: not-allowed; }
@@ -72,73 +116,34 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
 .btn-safe { background: #065f46; border-color: #047857; color: #34d399; }
 .btn-danger { background: #991b1b; border-color: #b91c1c; color: #fca5a5; }
 
-.telemetry-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
-}
-.metric {
-  background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; text-align: center;
-}
-.metric .label { font-size: 8px; color: var(--muted); text-transform: uppercase; }
-.metric .value { font-size: 13px; font-weight: 800; font-family: monospace; color: var(--cyan); margin-top: 1px; }
-
-.workspace {
-  display: grid; grid-template-columns: 140px 1fr 140px; gap: 8px; flex: 1; min-height: 0;
-}
-
-/* Throttle Slider */
-.slider-panel {
-  background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px;
-  display: flex; flex-direction: column; align-items: center; justify-content: space-between; text-align: center;
-}
-.slider-panel h2 { font-size: 10px; margin: 0; color: var(--muted); text-transform: uppercase; }
-
-.track {
-  position: relative; width: 48px; height: 100%; max-height: 160px;
-  margin: auto; border: 2px solid #1e293b; border-radius: 24px;
-  background: linear-gradient(180deg, #020617 0%, #0f172a 100%);
-  display: flex; justify-content: center;
-}
-.track-line { position: absolute; top: 10px; bottom: 10px; width: 4px; background: rgba(100,116,139,0.2); border-radius: 2px; }
-.slider-knob {
-  position: absolute; width: 40px; height: 40px; border-radius: 50%;
-  left: 2px; top: calc(100% - 44px); background: linear-gradient(135deg, #06b6d4, #0891b2);
-  border: 2px solid #cffafe; box-shadow: 0 0 10px var(--cyan-glow);
-  pointer-events: none;
-}
-
-/* Center HUD */
-.center-hud {
-  background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px;
-  display: flex; flex-direction: column; justify-content: space-between; align-items: center;
-}
 .horizon-box {
   width: 75px; height: 75px; border-radius: 50%; border: 2px solid #334155; overflow: hidden; position: relative;
-  background: #020617;
+  background: #020617; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
 }
 .horizon-bar {
-  width: 120px; height: 120px; background: linear-gradient(to bottom, rgba(6,182,212,0.4) 50%, rgba(245,158,11,0.4) 50%);
+  width: 120px; height: 120px; background: linear-gradient(to bottom, rgba(6,182,212,0.45) 50%, rgba(245,158,11,0.45) 50%);
   position: absolute; top: -22px; left: -22px; transition: transform 0.05s linear;
   display: flex; align-items: center; justify-content: center;
 }
-.horizon-bar::after { content: ""; width: 100%; height: 2px; background: #22d3ee; }
+.horizon-bar::after { content: ""; width: 100%; height: 2px; background: #22d3ee; box-shadow: 0 0 6px #22d3ee; }
 .crosshair { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
 .crosshair div { width: 8px; height: 8px; border: 2px solid var(--green); border-radius: 50%; }
 
-/* Joy-Con */
+/* RIGHT JOY-CON (ROLL/PITCH) */
 .stick-panel {
-  background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px;
-  display: flex; flex-direction: column; align-items: center; justify-content: space-between; text-align: center;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 8px;
+  display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 100%; text-align: center;
 }
-.stick-panel h2 { font-size: 10px; margin: 0; color: var(--muted); text-transform: uppercase; }
 
 .stick {
-  position: relative; width: 100%; max-width: 130px; aspect-ratio: 1;
+  position: relative; width: 100%; max-width: 120px; aspect-ratio: 1;
   margin: auto; border: 2px solid #1e293b; border-radius: 50%;
   background: radial-gradient(circle, #0f172a 0%, #020617 100%);
+  box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
 }
 .stick::before { content: ""; position: absolute; inset: 20%; border: 1px dashed rgba(100,116,139,0.3); border-radius: 50%; }
-.stick-vert { position: absolute; top: 10%; bottom: 10%; left: 50%; width: 1px; background: rgba(100,116,139,0.2); }
-.stick-horiz { position: absolute; top: 50%; left: 10%; right: 10%; height: 1px; background: rgba(100,116,139,0.2); }
+.stick-vert { position: absolute; top: 10%; bottom: 10%; left: 50%; width: 1px; background: rgba(100,116,139,0.25); }
+.stick-horiz { position: absolute; top: 50%; left: 10%; right: 10%; height: 1px; background: rgba(100,116,139,0.25); }
 
 .knob {
   position: absolute; width: 36%; aspect-ratio: 1; border-radius: 50%;
@@ -147,88 +152,93 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
   pointer-events: none;
 }
 
-.readout { font: 10px monospace; color: var(--cyan); background: rgba(2,6,23,0.6); padding: 3px 6px; border-radius: 4px; border: 1px solid var(--border); width: 100%; }
+.readout { font: 10px ui-monospace, monospace; color: var(--cyan); background: rgba(2,6,23,0.6); padding: 3px 6px; border-radius: 4px; border: 1px solid var(--border); width: 100%; font-weight: bold; }
 
+/* FOOTER LOG CONSOLE */
 .console-panel {
-  background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px;
-  display: flex; flex-direction: column; gap: 2px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; shrink: 0;
 }
 #log {
-  height: 35px; overflow-y: auto; white-space: pre-wrap;
-  background: #020617; padding: 4px; border-radius: 4px;
-  font: 9px monospace; color: #94a3b8; border: 1px solid var(--border);
+  height: 28px; overflow-y: auto; white-space: pre-wrap;
+  background: #020617; padding: 3px 6px; border-radius: 4px;
+  font: 9px/1.2 ui-monospace, monospace; color: #94a3b8; border: 1px solid var(--border);
 }
 </style>
 </head>
 <body>
 <main>
+  <!-- BRAND HEADER -->
   <header>
-    <div class="title-area">
-      <h1>S3 FLIGHT DECK</h1>
-      <p>Mobile Optimized</p>
+    <div class="brand-area">
+      <div class="brand-title">AVION CONTROLLER</div>
+      <div class="brand-sub">S3 Flight Deck</div>
     </div>
     <div class="badges">
-      <span id="connection" class="badge bad">DISC</span>
+      <span id="connection" class="badge bad">DISCONNECTED</span>
       <span id="armStatus" class="badge">SAFE</span>
     </div>
   </header>
 
-  <div class="control-bar">
-    <div style="display:flex; gap:4px;">
-      <button id="connectBtn" class="btn-primary" style="padding:6px 10px;">Connect</button>
-      <button id="disconnectBtn" style="padding:6px 10px;">Drop</button>
-    </div>
-    <div style="display:flex; gap:4px;">
-      <button id="armBtn" class="btn-safe" style="padding:6px 10px;" disabled>ARM</button>
-      <button id="disarmBtn" style="padding:6px 10px;" disabled>Disarm</button>
-      <button id="stopBtn" class="btn-danger" style="padding:6px 10px;" disabled>STOP</button>
-    </div>
-  </div>
+  <!-- LIVE METRICS BAR -->
+  <section class="metrics-deck">
+    <div class="metric-card"><div class="label">Roll / Pitch</div><div class="value" id="attitude">0.0° / 0.0°</div></div>
+    <div class="metric-card"><div class="label">ToF Distance</div><div class="value" id="distance">8190 mm</div></div>
+    <div class="metric-card"><div class="label">Throttle</div><div class="value" id="throttleReported">0%</div></div>
+    <div class="metric-card"><div class="label">IMU Status</div><div class="value" id="imuBadge" style="color:var(--green)">READY</div></div>
+  </section>
 
-  <div class="telemetry-grid">
-    <div class="metric"><div class="label">Roll / Pitch</div><div class="value" id="attitude">0.0° / 0.0°</div></div>
-    <div class="metric"><div class="label">Throttle</div><div class="value" id="throttleReported">0%</div></div>
-    <div class="metric"><div class="label">Status</div><div class="value" id="imuBadge" style="color:var(--green)">READY</div></div>
-  </div>
-
-  <section class="workspace">
-    <!-- THROTTLE SLIDER -->
+  <!-- LANDSCAPE WORKSPACE -->
+  <section class="flight-workspace">
+    <!-- LEFT THROTTLE SLIDER -->
     <div class="slider-panel">
-      <h2>Throttle</h2>
+      <div class="panel-title">THROTTLE</div>
       <div class="track" id="throttleTrack">
         <div class="track-line"></div>
         <div class="slider-knob" id="throttleKnob"></div>
       </div>
-      <div class="readout" id="throttleReadout">0%</div>
-      <label style="font-size:9px; color:var(--muted); display:flex; align-items:center; gap:3px;">
+      <div class="readout" id="throttleReadout">Thr: 0%</div>
+      <label style="font-size:9px; color:var(--muted); display:flex; align-items:center; gap:3px; cursor:pointer;">
         <input type="checkbox" id="holdThrottle" checked style="accent-color:var(--cyan);"> Hold
       </label>
     </div>
 
-    <!-- CENTER HUD -->
-    <div class="center-hud">
-      <span style="font-size:8px; font-weight:800; color:var(--muted); text-transform:uppercase;">Attitude</span>
-      <div class="horizon-box">
-        <div class="horizon-bar" id="horizonBar"></div>
-        <div class="crosshair"><div></div></div>
+    <!-- CENTER INSTRUMENTS & COMMAND BUTTONS -->
+    <div class="center-deck">
+      <div class="action-buttons">
+        <button id="connectBtn" class="btn-primary">Connect BLE</button>
+        <button id="disconnectBtn">Drop</button>
       </div>
-      <div style="font-family:monospace; font-size:10px; color:var(--cyan);">LOCKED</div>
+
+      <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
+        <span style="font-size:8px; font-weight:800; color:var(--muted); text-transform:uppercase;">Attitude Fusion</span>
+        <div class="horizon-box">
+          <div class="horizon-bar" id="horizonBar"></div>
+          <div class="crosshair"><div></div></div>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <button id="armBtn" class="btn-safe" disabled>ARM</button>
+        <button id="disarmBtn" disabled>Disarm</button>
+        <button id="stopBtn" class="btn-danger" disabled>STOP</button>
+      </div>
     </div>
 
-    <!-- ROLL / PITCH JOY-CON -->
+    <!-- RIGHT JOY-CON (ROLL / PITCH) -->
     <div class="stick-panel">
-      <h2>Roll / Pitch</h2>
+      <div class="panel-title">ROLL / PITCH</div>
       <div class="stick" id="rightStick">
         <div class="stick-vert"></div>
         <div class="stick-horiz"></div>
         <div class="knob"></div>
       </div>
-      <div class="readout" id="rightReadout">R:0 P:0</div>
+      <div class="readout" id="rightReadout">R:0 | P:0</div>
     </div>
   </section>
 
+  <!-- DIAGNOSTIC STREAM -->
   <section class="console-panel">
-    <div id="log">System initialized. Ready to pair.</div>
+    <div id="log">Avion Flight Deck Initialized. Connect Web Bluetooth to pair.</div>
   </section>
 </main>
 
@@ -245,6 +255,7 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
     logEl.textContent = `[${new Date().toLocaleTimeString().slice(0,8)}] ${msg}`;
   }
 
+  // --- BLE CONNECTION ---
   document.getElementById('connectBtn').addEventListener('click', async () => {
     try {
       bluetoothDevice = await navigator.bluetooth.requestDevice({
@@ -258,9 +269,9 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
       await txCharacteristic.startNotifications();
       txCharacteristic.addEventListener('characteristicvaluechanged', handleTelemetry);
       setConnectionState(true);
-      logMessage("Connected!");
+      logMessage("BLE Link Established.");
     } catch (err) {
-      logMessage("Error: " + err);
+      logMessage("BLE Link Error: " + err);
       setConnectionState(false);
     }
   });
@@ -273,7 +284,7 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
   function setConnectionState(connected) {
     isConnected = connected;
     const badge = document.getElementById('connection');
-    badge.textContent = connected ? "CONN" : "DISC";
+    badge.textContent = connected ? "CONNECTED" : "DISCONNECTED";
     badge.className = connected ? "badge good" : "badge bad";
     ['armBtn', 'disarmBtn', 'stopBtn'].forEach(id => {
       document.getElementById(id).disabled = !connected;
@@ -291,6 +302,7 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
   document.getElementById('disarmBtn').addEventListener('click', () => sendCommand('DISARM'));
   document.getElementById('stopBtn').addEventListener('click', () => sendCommand('STOP'));
 
+  // --- TELEMETRY PARSER ---
   function handleTelemetry(event) {
     const raw = new TextDecoder().decode(event.target.value).trim();
     const data = {};
@@ -298,19 +310,29 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
 
     if (data.ARM !== undefined) {
       const b = document.getElementById('armStatus');
-      b.textContent = data.ARM === '1' ? "ARM" : "SAFE";
+      b.textContent = data.ARM === '1' ? "ARMED" : "SAFE";
       b.className = data.ARM === '1' ? "badge good" : "badge";
     }
     if (data.R !== undefined && data.P !== undefined) {
       const r = parseFloat(data.R), p = parseFloat(data.P);
-      document.getElementById('attitude').textContent = `${r.toFixed(1)}°/${p.toFixed(1)}°`;
+      document.getElementById('attitude').textContent = `${r.toFixed(1)}° / ${p.toFixed(1)}°`;
       document.getElementById('horizonBar').style.transform = `translateY(${p * 1.2}px) rotate(${-r}deg)`;
+    }
+    if (data.D !== undefined) {
+      document.getElementById('distance').textContent = data.DOK === '1' ? `${data.D} mm` : "Out of Range";
     }
     if (data.T !== undefined) {
       document.getElementById('throttleReported').textContent = `${Math.round(parseFloat(data.T)/2.55)}%`;
     }
+    if (data.IMU !== undefined && data.CAL !== undefined) {
+      const ok = (data.IMU === '1' && data.CAL === '1');
+      const badge = document.getElementById('imuBadge');
+      badge.textContent = ok ? "READY" : "FAULT";
+      badge.style.color = ok ? "var(--green)" : "var(--red)";
+    }
   }
 
+  // 40Hz BLE Command Transmission Loop
   setInterval(() => {
     if (isConnected) sendCommand(`J,${joyState.roll},${joyState.pitch},0,${joyState.throttle}`);
   }, 40);
@@ -322,7 +344,7 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
     return Math.round(sign * (scaled * scaled * 0.3 + scaled * 0.7) * 100);
   }
 
-  // Throttle Slider
+  // --- LEFT THROTTLE SLIDER ENGINE ---
   function initThrottleSlider() {
     const track = document.getElementById('throttleTrack');
     const knob = document.getElementById('throttleKnob');
@@ -330,12 +352,12 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
     let active = false, touchId = null, posY = 1;
 
     function update() {
-      const trackHeight = track.clientHeight - 40;
+      const trackHeight = track.clientHeight - 36;
       knob.style.top = (posY * trackHeight) + 'px';
       const hold = document.getElementById('holdThrottle').checked;
       let rawT = (1 - posY);
       joyState.throttle = (-posY < 0.02 && !hold) ? 0 : Math.round(Math.max(0, Math.min(100, rawT * 100)));
-      readout.textContent = `${joyState.throttle}%`;
+      readout.textContent = `Thr: ${joyState.throttle}%`;
     }
 
     function handleStart(e) {
@@ -360,8 +382,8 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
     }
     function move(t) {
       const rect = track.getBoundingClientRect();
-      const trackHeight = rect.height - 40;
-      posY = Math.max(0, Math.min(trackHeight, t.clientY - (rect.top + 20))) / trackHeight;
+      const trackHeight = rect.height - 36;
+      posY = Math.max(0, Math.min(trackHeight, t.clientY - (rect.top + 18))) / trackHeight;
       update();
     }
 
@@ -371,7 +393,7 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
     update();
   }
 
-  // Joy-Con
+  // --- RIGHT JOY-CON ENGINE (ROLL / PITCH) ---
   function initJoyCon() {
     const container = document.getElementById('rightStick');
     const knob = container.querySelector('.knob');
@@ -383,7 +405,7 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
       knob.style.top = (32 + (posY * 32)) + '%';
       joyState.roll = applyDeadzone(posX, 0.1);
       joyState.pitch = applyDeadzone(-posY, 0.1);
-      readout.textContent = `R:${joyState.roll} P:${joyState.pitch}`;
+      readout.textContent = `R:${joyState.roll} | P:${joyState.pitch}`;
     }
 
     function handleStart(e) {
