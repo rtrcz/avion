@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Kattanlabs S3 Quad HUD</title>
+<title>Kattanlabs S3 Quad Bench HUD</title>
 <style>
 :root {
   color-scheme: dark;
   --bg: #030712;
-  --panel: rgba(15, 23, 42, 0.75);
+  --panel: rgba(15, 23, 42, 0.85);
   --border: rgba(30, 41, 59, 0.8);
   --cyan: #06b6d4;
-  --cyan-glow: rgba(6, 182, 212, 0.25);
+  --cyan-glow: rgba(6, 182, 212, 0.3);
   --green: #10b981;
   --green-glow: rgba(16, 185, 129, 0.3);
   --red: #ef4444;
@@ -23,13 +23,13 @@
 * { box-sizing: border-box; user-select: none; -webkit-user-select: none; touch-action: none; }
 
 body {
-  margin: 0; padding: 10px; background: var(--bg); color: var(--text);
+  margin: 0; padding: 12px; background: var(--bg); color: var(--text);
   font: 13px/1.4 system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   overflow: hidden; height: 100vh; display: flex; flex-direction: column;
 }
 
 main {
-  max-width: 950px; width: 100%; margin: auto; display: flex; flex-direction: column; gap: 8px; height: 100%; justify-content: space-between;
+  max-width: 800px; width: 100%; margin: auto; display: flex; flex-direction: column; gap: 10px; height: 100%; justify-content: space-between;
 }
 
 header {
@@ -55,7 +55,7 @@ header {
 }
 
 button {
-  border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px;
+  border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px;
   color: var(--text); background: #1e293b; font-size: 11px; font-weight: 700;
   cursor: pointer; transition: all 0.1s ease; text-transform: uppercase; letter-spacing: 0.05em;
 }
@@ -66,7 +66,7 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
 .btn-danger { background: #991b1b; border-color: #b91c1c; color: #fca5a5; box-shadow: 0 0 12px rgba(153,27,27,0.4); }
 
 .telemetry-grid {
-  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px;
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;
 }
 .metric {
   background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px;
@@ -75,39 +75,33 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
 .metric .value { font-size: 15px; font-weight: 800; font-family: ui-monospace, monospace; color: var(--cyan); margin-top: 2px; }
 
 .workspace {
-  display: grid; grid-template-columns: 1fr 240px 1fr; gap: 10px; flex: 1; min-height: 0;
+  display: grid; grid-template-columns: 220px 1fr; gap: 12px; flex: 1; min-height: 0;
 }
 
-.stick-panel {
+.slider-panel {
   background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 12px;
   display: flex; flex-direction: column; align-items: center; justify-content: space-between; text-align: center;
 }
-.stick-panel h2 { font-size: 11px; margin: 0; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+.slider-panel h2 { font-size: 11px; margin: 0; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
 
-.stick {
-  position: relative; width: 100%; max-width: 190px; aspect-ratio: 1;
-  margin: auto; border: 2px solid #1e293b; border-radius: 50%;
-  background: radial-gradient(circle, #0f172a 0%, #020617 100%);
-  box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 0 15px rgba(6,182,212,0.05);
+.track {
+  position: relative; width: 64px; height: 100%; max-height: 220px;
+  margin: auto; border: 2px solid #1e293b; border-radius: 32px;
+  background: linear-gradient(180deg, #020617 0%, #0f172a 100%);
+  box-shadow: inset 0 0 15px rgba(0,0,0,0.8); display: flex; justify-content: center;
 }
-.stick::before {
-  content: ""; position: absolute; inset: 22%; border: 1px dashed rgba(100,116,139,0.3); border-radius: 50%;
-}
-.stick::after {
-  content: ""; position: absolute; top: 50%; left: 10%; right: 10%; height: 1px; background: rgba(100,116,139,0.2);
-}
-.stick-vert {
-  position: absolute; top: 10%; bottom: 10%; left: 50%; width: 1px; background: rgba(100,116,139,0.2);
+.track-line {
+  position: absolute; top: 15px; bottom: 15px; width: 4px; background: rgba(100,116,139,0.2); border-radius: 2px;
 }
 
 .knob {
-  position: absolute; width: 34%; aspect-ratio: 1; border-radius: 50%;
-  left: 33%; top: 33%; background: linear-gradient(135deg, #06b6d4, #0891b2);
+  position: absolute; width: 52px; height: 52px; border-radius: 50%;
+  left: 4px; top: calc(100% - 56px); background: linear-gradient(135deg, #06b6d4, #0891b2);
   border: 2px solid #cffafe; box-shadow: 0 0 15px var(--cyan-glow);
   pointer-events: none; transition: background 0.1s;
 }
 
-.readout { font: 11px ui-monospace, monospace; color: var(--cyan); background: rgba(2,6,23,0.6); padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border); width: 100%; }
+.readout { font: 12px ui-monospace, monospace; color: var(--cyan); background: rgba(2,6,23,0.6); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); width: 100%; font-weight: bold; }
 
 .center-hud {
   background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 12px;
@@ -115,11 +109,11 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
 }
 
 .horizon-box {
-  width: 90px; height: 90px; border-radius: 50%; border: 2px solid #334155; overflow: hidden; position: relative;
+  width: 100px; height: 100px; border-radius: 50%; border: 2px solid #334155; overflow: hidden; position: relative;
   background: #020617; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
 }
 .horizon-bar {
-  width: 140px; height: 140px; background: linear-gradient(to bottom, rgba(6,182,212,0.4) 50%, rgba(245,158,11,0.4) 50%);
+  width: 150px; height: 150px; background: linear-gradient(to bottom, rgba(6,182,212,0.4) 50%, rgba(245,158,11,0.4) 50%);
   position: absolute; top: -25px; left: -25px; transition: transform 0.05s linear;
   display: flex; align-items: center; justify-content: center;
 }
@@ -144,8 +138,8 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
   <!-- TOP HEADER -->
   <header>
     <div class="title-area">
-      <h1>S3 QUADCOPTER HUD</h1>
-      <p>Kattanlabs Flight Deck</p>
+      <h1>S3 QUADCOPTER BENCH HUD</h1>
+      <p>Single-Axis Throttle Control</p>
     </div>
     <div class="badges">
       <span id="connection" class="badge bad">DISCONNECTED</span>
@@ -171,238 +165,16 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
     <div class="metric"><div class="label">Roll / Pitch</div><div class="value" id="attitude">0.0° / 0.0°</div></div>
     <div class="metric"><div class="label">ToF Distance</div><div class="value" id="distance">8190 mm</div></div>
     <div class="metric"><div class="label">Throttle PWM</div><div class="value" id="throttleReported">0 (0%)</div></div>
-    <div class="metric"><div class="label">IMU Status</div><div class="value" id="imuBadge" style="color:var(--muted)">READY</div></div>
   </div>
 
-  <!-- WORKSPACE: DUAL JOY-CONS + ARTIFICIAL HORIZON -->
+  <!-- WORKSPACE: THROTTLE SLIDER + ARTIFICIAL HORIZON -->
   <section class="workspace">
-    <!-- LEFT STICK -->
-    <div class="stick-panel">
-      <h2>Throttle / Yaw</h2>
-      <div class="stick" id="leftStick">
-        <div class="stick-vert"></div>
-        <div class="knob"></div>
+    <!-- VERTICAL THROTTLE SLIDER ONLY -->
+    <div class="slider-panel">
+      <h2>Throttle Slider</h2>
+      <div class="track" id="throttleTrack">
+        <div class="track-line"></div>
+        <div class="knob" id="throttleKnob"></div>
       </div>
-      <div class="readout" id="leftReadout">Yaw: 0 | Thr: 0%</div>
-      <label style="font-size:10px; color:var(--muted); display:flex; align-items:center; gap:4px; cursor:pointer;">
-        <input type="checkbox" id="holdThrottle" checked style="accent-color:var(--cyan);"> Hold Throttle
-      </label>
-    </div>
-
-    <!-- CENTER FLIGHT DATA HUD -->
-    <div class="center-hud">
-      <span style="font-size:9px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em;">Attitude Fusion</span>
-      <div class="horizon-box">
-        <div class="horizon-bar" id="horizonBar"></div>
-        <div class="crosshair"><div></div></div>
-      </div>
-      <div style="font-family:ui-monospace,monospace; font-size:11px; color:var(--cyan);" id="gyroReadout">GX:0 GY:0 GZ:0</div>
-    </div>
-
-    <!-- RIGHT STICK -->
-    <div class="stick-panel">
-      <h2>Roll / Pitch</h2>
-      <div class="stick" id="rightStick">
-        <div class="stick-vert"></div>
-        <div class="knob"></div>
-      </div>
-      <div class="readout" id="rightReadout">Roll: 0 | Pitch: 0</div>
-    </div>
-  </section>
-
-  <!-- DIAGNOSTIC CONSOLE -->
-  <section class="console-panel">
-    <div class="console-header">
-      <span>TELEMETRY & BLE STREAM</span>
-      <button id="refreshBtn" style="padding:1px 6px; font-size:9px;">Clear</button>
-    </div>
-    <div id="log"></div>
-  </section>
-</main>
-
-<script>
-  const SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
-  const RX_UUID      = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
-  const TX_UUID      = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
-
-  let bluetoothDevice = null, rxCharacteristic = null, txCharacteristic = null, isConnected = false;
-  let joyState = { roll: 0, pitch: 0, yaw: 0, throttle: 0 };
-  const logEl = document.getElementById('log');
-
-  function logMessage(msg) {
-    logEl.textContent += `[${new Date().toLocaleTimeString()}] ${msg}\n`;
-    logEl.scrollTop = logEl.scrollHeight;
-  }
-
-  document.getElementById('connectBtn').addEventListener('click', async () => {
-    try {
-      bluetoothDevice = await navigator.bluetooth.requestDevice({
-        filters: [{ name: 'S3_Quad_PWM' }], optionalServices: [SERVICE_UUID]
-      });
-      bluetoothDevice.addEventListener('gattserverdisconnected', () => setConnectionState(false));
-      const server = await bluetoothDevice.gatt.connect();
-      const service = await server.getPrimaryService(SERVICE_UUID);
-      rxCharacteristic = await service.getCharacteristic(RX_UUID);
-      txCharacteristic = await service.getCharacteristic(TX_UUID);
-      await txCharacteristic.startNotifications();
-      txCharacteristic.addEventListener('characteristicvaluechanged', handleTelemetry);
-      setConnectionState(true);
-      logMessage("BLE Connected successfully.");
-    } catch (err) {
-      logMessage("Connection Error: " + err);
-      setConnectionState(false);
-    }
-  });
-
-  document.getElementById('disconnectBtn').addEventListener('click', () => {
-    if (bluetoothDevice?.gatt.connected) bluetoothDevice.gatt.disconnect();
-    setConnectionState(false);
-  });
-  document.getElementById('refreshBtn').addEventListener('click', () => logEl.textContent = '');
-
-  function setConnectionState(connected) {
-    isConnected = connected;
-    const badge = document.getElementById('connection');
-    badge.textContent = connected ? "CONNECTED" : "DISCONNECTED";
-    badge.className = connected ? "badge good" : "badge bad";
-    ['armBtn', 'disarmBtn', 'stopBtn'].forEach(id => {
-      document.getElementById(id).disabled = !connected;
-    });
-  }
-
-  async function sendCommand(cmd) {
-    if (!rxCharacteristic || !isConnected) return;
-    try {
-      await rxCharacteristic.writeValue(new TextEncoder().encode(cmd + "\n"));
-    } catch (err) {}
-  }
-
-  document.getElementById('armBtn').addEventListener('click', () => sendCommand('ARM'));
-  document.getElementById('disarmBtn').addEventListener('click', () => sendCommand('DISARM'));
-  document.getElementById('stopBtn').addEventListener('click', () => sendCommand('STOP'));
-
-  function handleTelemetry(event) {
-    const raw = new TextDecoder().decode(event.target.value).trim();
-    const data = {};
-    raw.split(',').forEach(p => { const kv = p.split(':'); if(kv.length===2) data[kv[0]]=kv[1]; });
-
-    if (data.ARM !== undefined) {
-      const b = document.getElementById('armStatus');
-      b.textContent = data.ARM === '1' ? "ARMED" : "DISARMED";
-      b.className = data.ARM === '1' ? "badge good" : "badge";
-    }
-    if (data.R !== undefined && data.P !== undefined) {
-      const r = parseFloat(data.R), p = parseFloat(data.P);
-      document.getElementById('attitude').textContent = `${r.toFixed(1)}° / ${p.toFixed(1)}°`;
-      document.getElementById('horizonBar').style.transform = `translateY(${p * 1.5}px) rotate(${-r}deg)`;
-    }
-    if (data.GX !== undefined && data.GY !== undefined) {
-      document.getElementById('gyroReadout').textContent = `GX:${parseFloat(data.GX).toFixed(0)} GY:${parseFloat(data.GY).toFixed(0)}`;
-    }
-    if (data.D !== undefined) {
-      document.getElementById('distance').textContent = data.DOK === '1' ? data.D + " mm" : "Out of range";
-    }
-    if (data.T !== undefined) {
-      const tVal = parseFloat(data.T);
-      document.getElementById('throttleReported').textContent = `${tVal.toFixed(0)} (${Math.round(tVal/2.55)}%)`;
-    }
-  }
-
-  // 40Hz BLE Command Stream
-  setInterval(() => {
-    if (isConnected) sendCommand(`J,${joyState.roll},${joyState.pitch},${joyState.yaw},${joyState.throttle}`);
-  }, 40);
-
-  // Deadzone & Expo filter to eliminate hover drift
-  function applyDeadzoneAndExpo(val, deadzone = 0.12) {
-    if (Math.abs(val) < deadzone) return 0;
-    const sign = Math.sign(val);
-    const scaled = (Math.abs(val) - deadzone) / (1 - deadzone);
-    return Math.round(sign * (scaled * scaled * 0.3 + scaled * 0.7) * 100);
-  }
-
-  function initJoystick(stickId, readoutId, isThrottleYaw, options = {}) {
-    const container = document.getElementById(stickId);
-    const knob = container.querySelector('.knob');
-    const readout = document.getElementById(readoutId);
-
-    let active = false, touchId = null, posX = 0, posY = options.initialY || 0;
-
-    function update() {
-      const xPct = 33 + (posX * 33);
-      const yPct = 33 + (posY * 33);
-      knob.style.left = xPct + '%';
-      knob.style.top = yPct + '%';
-
-      if (isThrottleYaw) {
-        joyState.yaw = applyDeadzoneAndExpo(posX, 0.15);
-        const hold = document.getElementById('holdThrottle').checked;
-        let rawT = (-posY + 1) / 2;
-        if (!hold && Math.abs(posY) > 0.8) rawT = 0;
-        
-        if (-posY < 0.05 && !hold) {
-          joyState.throttle = 0;
-        } else {
-          joyState.throttle = Math.round(Math.max(0, Math.min(100, rawT * 100)));
-        }
-        readout.textContent = `Yaw: ${joyState.yaw} | Thr: ${joyState.throttle}%`;
-      } else {
-        joyState.roll = applyDeadzoneAndExpo(posX, 0.1);
-        joyState.pitch = applyDeadzoneAndExpo(-posY, 0.1);
-        readout.textContent = `Roll: ${joyState.roll} | Pitch: ${joyState.pitch}`;
-      }
-    }
-
-    function handleStart(e) {
-      e.preventDefault();
-      if (active) return;
-      const t = e.changedTouches ? e.changedTouches[0] : e;
-      active = true; touchId = t.identifier ?? null;
-      move(t);
-    }
-
-    function handleMove(e) {
-      e.preventDefault();
-      if (!active) return;
-      const touches = e.changedTouches ? Array.from(e.changedTouches) : [e];
-      for (let t of touches) {
-        if (t.identifier === touchId || touchId === null) { move(t); break; }
-      }
-    }
-
-    function handleEnd(e) {
-      e.preventDefault();
-      if (!active) return;
-      active = false; touchId = null;
-      posX = 0;
-      if (options.autoCenterY) posY = 0;
-      update();
-    }
-
-    function move(t) {
-      const rect = container.getBoundingClientRect();
-      const r = rect.width / 2;
-      let dx = t.clientX - (rect.left + r);
-      let dy = t.clientY - (rect.top + r);
-      const dist = Math.sqrt(dx * dx + dy * dy);
-
-      if (dist > r * 0.75) {
-        dx = (dx / dist) * (r * 0.75);
-        dy = (dy / dist) * (r * 0.75);
-      }
-      posX = dx / (r * 0.75);
-      posY = dy / (r * 0.75);
-      update();
-    }
-
-    container.addEventListener('pointerdown', handleStart);
-    window.addEventListener('pointermove', e => { if (active) handleMove(e); });
-    window.addEventListener('pointerup', e => { if (active) handleEnd(e); });
-    update();
-  }
-
-  initJoystick('leftStick', 'leftReadout', true, { initialY: 1 });
-  initJoystick('rightStick', 'rightReadout', false, { initialY: 0, autoCenterY: true });
-</script>
-</body>
-</html>
+      <div class="readout" id="throttleReadout">Throttle: 0%</div>
+      <label style="font-size:10px; color:var(--muted); display:flex; align-items:center; gap:4
