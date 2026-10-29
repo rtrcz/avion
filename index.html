@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Kattanlabs S3 Quad Flight Deck</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>S3 Quad Flight Deck</title>
 <style>
 :root {
   color-scheme: dark;
   --bg: #030712;
-  --panel: rgba(15, 23, 42, 0.85);
+  --panel: rgba(15, 23, 42, 0.9);
   --border: rgba(30, 41, 59, 0.8);
   --cyan: #06b6d4;
   --cyan-glow: rgba(6, 182, 212, 0.3);
@@ -20,203 +20,202 @@
   --muted: #64748b;
 }
 
-* { box-sizing: border-box; user-select: none; -webkit-user-select: none; touch-action: none; }
+* { 
+  box-sizing: border-box; 
+  user-select: none; 
+  -webkit-user-select: none; 
+  touch-action: none; 
+  -webkit-touch-callout: none;
+}
 
-body {
-  margin: 0; padding: 10px; background: var(--bg); color: var(--text);
-  font: 13px/1.4 system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  overflow: hidden; height: 100vh; display: flex; flex-direction: column;
+body, html {
+  margin: 0; padding: 0; width: 100%; height: 100%;
+  background: var(--bg); color: var(--text);
+  font: 13px/1.4 system-ui, -apple-system, sans-serif;
+  overflow: hidden; position: fixed;
 }
 
 main {
-  max-width: 950px; width: 100%; margin: auto; display: flex; flex-direction: column; gap: 8px; height: 100%; justify-content: space-between;
+  display: flex; flex-direction: column; width: 100%; height: 100%;
+  padding: 8px; gap: 6px; justify-content: space-between;
 }
 
 header {
   display: flex; justify-content: space-between; align-items: center;
-  background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 10px 14px;
-  backdrop-filter: blur(12px);
+  background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 6px 10px;
 }
 
-.title-area h1 { font-size: 15px; margin: 0; font-weight: 800; letter-spacing: 0.05em; color: #e2e8f0; }
-.title-area p { font-size: 10px; margin: 0; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+.title-area h1 { font-size: 13px; margin: 0; font-weight: 800; color: #e2e8f0; }
+.title-area p { font-size: 9px; margin: 0; color: var(--muted); text-transform: uppercase; }
 
-.badges { display: flex; gap: 6px; align-items: center; }
+.badges { display: flex; gap: 4px; align-items: center; }
 .badge {
-  padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; font-family: ui-monospace, monospace;
+  padding: 3px 6px; border-radius: 4px; font-size: 9px; font-weight: 800; font-family: monospace;
   background: #1e293b; color: var(--muted); border: 1px solid var(--border);
 }
-.badge.good { background: var(--green-glow); color: var(--green); border-color: rgba(16,185,129,0.4); box-shadow: 0 0 10px var(--green-glow); }
+.badge.good { background: var(--green-glow); color: var(--green); border-color: rgba(16,185,129,0.4); }
 .badge.bad { background: var(--red-glow); color: var(--red); border-color: rgba(239,68,68,0.4); }
 
 .control-bar {
   display: flex; justify-content: space-between; align-items: center;
-  background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 8px 12px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 6px 10px;
 }
 
 button {
-  border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px;
+  border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px;
   color: var(--text); background: #1e293b; font-size: 11px; font-weight: 700;
-  cursor: pointer; transition: all 0.1s ease; text-transform: uppercase; letter-spacing: 0.05em;
+  cursor: pointer; text-transform: uppercase;
 }
-button:active { transform: scale(0.96); }
+button:active { transform: scale(0.95); }
 button:disabled { opacity: 0.3; cursor: not-allowed; }
-.btn-primary { background: #0891b2; border-color: #0e7490; color: #fff; box-shadow: 0 0 12px rgba(8,145,178,0.4); }
-.btn-safe { background: #065f46; border-color: #047857; color: #34d399; box-shadow: 0 0 12px rgba(6,95,70,0.4); }
-.btn-danger { background: #991b1b; border-color: #b91c1c; color: #fca5a5; box-shadow: 0 0 12px rgba(153,27,27,0.4); }
+.btn-primary { background: #0891b2; border-color: #0e7490; color: #fff; }
+.btn-safe { background: #065f46; border-color: #047857; color: #34d399; }
+.btn-danger { background: #991b1b; border-color: #b91c1c; color: #fca5a5; }
 
 .telemetry-grid {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
 }
 .metric {
-  background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; text-align: center;
 }
-.metric .label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
-.metric .value { font-size: 15px; font-weight: 800; font-family: ui-monospace, monospace; color: var(--cyan); margin-top: 2px; }
+.metric .label { font-size: 8px; color: var(--muted); text-transform: uppercase; }
+.metric .value { font-size: 13px; font-weight: 800; font-family: monospace; color: var(--cyan); margin-top: 1px; }
 
 .workspace {
-  display: grid; grid-template-columns: 200px 1fr 200px; gap: 10px; flex: 1; min-height: 0;
+  display: grid; grid-template-columns: 140px 1fr 140px; gap: 8px; flex: 1; min-height: 0;
 }
 
-/* Left Throttle Slider */
+/* Throttle Slider */
 .slider-panel {
-  background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 12px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px;
   display: flex; flex-direction: column; align-items: center; justify-content: space-between; text-align: center;
 }
-.slider-panel h2 { font-size: 11px; margin: 0; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+.slider-panel h2 { font-size: 10px; margin: 0; color: var(--muted); text-transform: uppercase; }
 
 .track {
-  position: relative; width: 56px; height: 100%; max-height: 190px;
-  margin: auto; border: 2px solid #1e293b; border-radius: 28px;
+  position: relative; width: 48px; height: 100%; max-height: 160px;
+  margin: auto; border: 2px solid #1e293b; border-radius: 24px;
   background: linear-gradient(180deg, #020617 0%, #0f172a 100%);
-  box-shadow: inset 0 0 15px rgba(0,0,0,0.8); display: flex; justify-content: center;
+  display: flex; justify-content: center;
 }
-.track-line {
-  position: absolute; top: 15px; bottom: 15px; width: 4px; background: rgba(100,116,139,0.2); border-radius: 2px;
-}
+.track-line { position: absolute; top: 10px; bottom: 10px; width: 4px; background: rgba(100,116,139,0.2); border-radius: 2px; }
 .slider-knob {
-  position: absolute; width: 46px; height: 46px; border-radius: 50%;
-  left: 3px; top: calc(100% - 50px); background: linear-gradient(135deg, #06b6d4, #0891b2);
-  border: 2px solid #cffafe; box-shadow: 0 0 15px var(--cyan-glow);
+  position: absolute; width: 40px; height: 40px; border-radius: 50%;
+  left: 2px; top: calc(100% - 44px); background: linear-gradient(135deg, #06b6d4, #0891b2);
+  border: 2px solid #cffafe; box-shadow: 0 0 10px var(--cyan-glow);
   pointer-events: none;
 }
 
 /* Center HUD */
 .center-hud {
-  background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 12px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px;
   display: flex; flex-direction: column; justify-content: space-between; align-items: center;
 }
 .horizon-box {
-  width: 90px; height: 90px; border-radius: 50%; border: 2px solid #334155; overflow: hidden; position: relative;
-  background: #020617; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+  width: 75px; height: 75px; border-radius: 50%; border: 2px solid #334155; overflow: hidden; position: relative;
+  background: #020617;
 }
 .horizon-bar {
-  width: 140px; height: 140px; background: linear-gradient(to bottom, rgba(6,182,212,0.4) 50%, rgba(245,158,11,0.4) 50%);
-  position: absolute; top: -25px; left: -25px; transition: transform 0.05s linear;
+  width: 120px; height: 120px; background: linear-gradient(to bottom, rgba(6,182,212,0.4) 50%, rgba(245,158,11,0.4) 50%);
+  position: absolute; top: -22px; left: -22px; transition: transform 0.05s linear;
   display: flex; align-items: center; justify-content: center;
 }
-.horizon-bar::after { content: ""; width: 100%; height: 2px; background: #22d3ee; box-shadow: 0 0 8px #22d3ee; }
+.horizon-bar::after { content: ""; width: 100%; height: 2px; background: #22d3ee; }
 .crosshair { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
-.crosshair div { width: 10px; height: 10px; border: 2px solid var(--green); border-radius: 50%; }
+.crosshair div { width: 8px; height: 8px; border: 2px solid var(--green); border-radius: 50%; }
 
-/* Right Joy-Con */
+/* Joy-Con */
 .stick-panel {
-  background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 12px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 8px;
   display: flex; flex-direction: column; align-items: center; justify-content: space-between; text-align: center;
 }
-.stick-panel h2 { font-size: 11px; margin: 0; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+.stick-panel h2 { font-size: 10px; margin: 0; color: var(--muted); text-transform: uppercase; }
 
 .stick {
-  position: relative; width: 100%; max-width: 190px; aspect-ratio: 1;
+  position: relative; width: 100%; max-width: 130px; aspect-ratio: 1;
   margin: auto; border: 2px solid #1e293b; border-radius: 50%;
   background: radial-gradient(circle, #0f172a 0%, #020617 100%);
-  box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
 }
-.stick::before { content: ""; position: absolute; inset: 22%; border: 1px dashed rgba(100,116,139,0.3); border-radius: 50%; }
+.stick::before { content: ""; position: absolute; inset: 20%; border: 1px dashed rgba(100,116,139,0.3); border-radius: 50%; }
 .stick-vert { position: absolute; top: 10%; bottom: 10%; left: 50%; width: 1px; background: rgba(100,116,139,0.2); }
 .stick-horiz { position: absolute; top: 50%; left: 10%; right: 10%; height: 1px; background: rgba(100,116,139,0.2); }
 
 .knob {
-  position: absolute; width: 34%; aspect-ratio: 1; border-radius: 50%;
-  left: 33%; top: 33%; background: linear-gradient(135deg, #06b6d4, #0891b2);
-  border: 2px solid #cffafe; box-shadow: 0 0 15px var(--cyan-glow);
+  position: absolute; width: 36%; aspect-ratio: 1; border-radius: 50%;
+  left: 32%; top: 32%; background: linear-gradient(135deg, #06b6d4, #0891b2);
+  border: 2px solid #cffafe; box-shadow: 0 0 10px var(--cyan-glow);
   pointer-events: none;
 }
 
-.readout { font: 11px ui-monospace, monospace; color: var(--cyan); background: rgba(2,6,23,0.6); padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border); width: 100%; }
+.readout { font: 10px monospace; color: var(--cyan); background: rgba(2,6,23,0.6); padding: 3px 6px; border-radius: 4px; border: 1px solid var(--border); width: 100%; }
 
 .console-panel {
-  background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 8px 12px;
-  display: flex; flex-direction: column; gap: 4px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px;
+  display: flex; flex-direction: column; gap: 2px;
 }
-.console-header { display: flex; justify-content: space-between; align-items: center; font-size: 10px; font-weight: 800; color: var(--muted); letter-spacing: 0.05em; }
 #log {
-  height: 50px; overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere;
-  background: #020617; padding: 6px 8px; border-radius: 6px;
-  font: 10px/1.2 ui-monospace, monospace; color: #94a3b8; border: 1px solid var(--border);
+  height: 35px; overflow-y: auto; white-space: pre-wrap;
+  background: #020617; padding: 4px; border-radius: 4px;
+  font: 9px monospace; color: #94a3b8; border: 1px solid var(--border);
 }
 </style>
 </head>
 <body>
 <main>
-  <!-- HEADER -->
   <header>
     <div class="title-area">
-      <h1>S3 QUADCOPTER FLIGHT DECK</h1>
-      <p>Throttle Slider + Roll/Pitch Joy-Con</p>
+      <h1>S3 FLIGHT DECK</h1>
+      <p>Mobile Optimized</p>
     </div>
     <div class="badges">
-      <span id="connection" class="badge bad">DISCONNECTED</span>
-      <span id="armStatus" class="badge">DISARMED</span>
+      <span id="connection" class="badge bad">DISC</span>
+      <span id="armStatus" class="badge">SAFE</span>
     </div>
   </header>
 
-  <!-- ACTION BAR -->
   <div class="control-bar">
-    <div style="display:flex; gap:6px;">
-      <button id="connectBtn" class="btn-primary">Connect BLE</button>
-      <button id="disconnectBtn">Disconnect</button>
+    <div style="display:flex; gap:4px;">
+      <button id="connectBtn" class="btn-primary" style="padding:6px 10px;">Connect</button>
+      <button id="disconnectBtn" style="padding:6px 10px;">Drop</button>
     </div>
-    <div style="display:flex; gap:6px;">
-      <button id="armBtn" class="btn-safe" disabled>ARM</button>
-      <button id="disarmBtn" disabled>DISARM</button>
-      <button id="stopBtn" class="btn-danger" disabled>STOP</button>
+    <div style="display:flex; gap:4px;">
+      <button id="armBtn" class="btn-safe" style="padding:6px 10px;" disabled>ARM</button>
+      <button id="disarmBtn" style="padding:6px 10px;" disabled>Disarm</button>
+      <button id="stopBtn" class="btn-danger" style="padding:6px 10px;" disabled>STOP</button>
     </div>
   </div>
 
-  <!-- METRICS -->
   <div class="telemetry-grid">
     <div class="metric"><div class="label">Roll / Pitch</div><div class="value" id="attitude">0.0° / 0.0°</div></div>
-    <div class="metric"><div class="label">Throttle PWM</div><div class="value" id="throttleReported">0 (0%)</div></div>
-    <div class="metric"><div class="label">IMU Status</div><div class="value" id="imuBadge" style="color:var(--muted)">READY</div></div>
+    <div class="metric"><div class="label">Throttle</div><div class="value" id="throttleReported">0%</div></div>
+    <div class="metric"><div class="label">Status</div><div class="value" id="imuBadge" style="color:var(--green)">READY</div></div>
   </div>
 
-  <!-- WORKSPACE -->
   <section class="workspace">
-    <!-- LEFT THROTTLE SLIDER -->
+    <!-- THROTTLE SLIDER -->
     <div class="slider-panel">
       <h2>Throttle</h2>
       <div class="track" id="throttleTrack">
         <div class="track-line"></div>
         <div class="slider-knob" id="throttleKnob"></div>
       </div>
-      <div class="readout" id="throttleReadout">Thr: 0%</div>
-      <label style="font-size:10px; color:var(--muted); display:flex; align-items:center; gap:4px; cursor:pointer;">
+      <div class="readout" id="throttleReadout">0%</div>
+      <label style="font-size:9px; color:var(--muted); display:flex; align-items:center; gap:3px;">
         <input type="checkbox" id="holdThrottle" checked style="accent-color:var(--cyan);"> Hold
       </label>
     </div>
 
     <!-- CENTER HUD -->
     <div class="center-hud">
-      <span style="font-size:9px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em;">Attitude Fusion</span>
+      <span style="font-size:8px; font-weight:800; color:var(--muted); text-transform:uppercase;">Attitude</span>
       <div class="horizon-box">
         <div class="horizon-bar" id="horizonBar"></div>
         <div class="crosshair"><div></div></div>
       </div>
-      <div style="font-family:ui-monospace,monospace; font-size:11px; color:var(--cyan);" id="gyroReadout">STABLE</div>
+      <div style="font-family:monospace; font-size:10px; color:var(--cyan);">LOCKED</div>
     </div>
 
-    <!-- RIGHT ROLL / PITCH JOY-CON -->
+    <!-- ROLL / PITCH JOY-CON -->
     <div class="stick-panel">
       <h2>Roll / Pitch</h2>
       <div class="stick" id="rightStick">
@@ -224,17 +223,12 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
         <div class="stick-horiz"></div>
         <div class="knob"></div>
       </div>
-      <div class="readout" id="rightReadout">Roll: 0 | Pitch: 0</div>
+      <div class="readout" id="rightReadout">R:0 P:0</div>
     </div>
   </section>
 
-  <!-- CONSOLE -->
   <section class="console-panel">
-    <div class="console-header">
-      <span>DIAGNOSTIC STREAM</span>
-      <button id="refreshBtn" style="padding:1px 6px; font-size:9px;">Clear</button>
-    </div>
-    <div id="log"></div>
+    <div id="log">System initialized. Ready to pair.</div>
   </section>
 </main>
 
@@ -248,8 +242,7 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
   const logEl = document.getElementById('log');
 
   function logMessage(msg) {
-    logEl.textContent += `[${new Date().toLocaleTimeString()}] ${msg}\n`;
-    logEl.scrollTop = logEl.scrollHeight;
+    logEl.textContent = `[${new Date().toLocaleTimeString().slice(0,8)}] ${msg}`;
   }
 
   document.getElementById('connectBtn').addEventListener('click', async () => {
@@ -265,9 +258,9 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
       await txCharacteristic.startNotifications();
       txCharacteristic.addEventListener('characteristicvaluechanged', handleTelemetry);
       setConnectionState(true);
-      logMessage("BLE Connected successfully.");
+      logMessage("Connected!");
     } catch (err) {
-      logMessage("Connection Error: " + err);
+      logMessage("Error: " + err);
       setConnectionState(false);
     }
   });
@@ -276,12 +269,11 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
     if (bluetoothDevice?.gatt.connected) bluetoothDevice.gatt.disconnect();
     setConnectionState(false);
   });
-  document.getElementById('refreshBtn').addEventListener('click', () => logEl.textContent = '');
 
   function setConnectionState(connected) {
     isConnected = connected;
     const badge = document.getElementById('connection');
-    badge.textContent = connected ? "CONNECTED" : "DISCONNECTED";
+    badge.textContent = connected ? "CONN" : "DISC";
     badge.className = connected ? "badge good" : "badge bad";
     ['armBtn', 'disarmBtn', 'stopBtn'].forEach(id => {
       document.getElementById(id).disabled = !connected;
@@ -306,54 +298,44 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
 
     if (data.ARM !== undefined) {
       const b = document.getElementById('armStatus');
-      b.textContent = data.ARM === '1' ? "ARMED" : "DISARMED";
+      b.textContent = data.ARM === '1' ? "ARM" : "SAFE";
       b.className = data.ARM === '1' ? "badge good" : "badge";
     }
     if (data.R !== undefined && data.P !== undefined) {
       const r = parseFloat(data.R), p = parseFloat(data.P);
-      document.getElementById('attitude').textContent = `${r.toFixed(1)}° / ${p.toFixed(1)}°`;
-      document.getElementById('horizonBar').style.transform = `translateY(${p * 1.5}px) rotate(${-r}deg)`;
+      document.getElementById('attitude').textContent = `${r.toFixed(1)}°/${p.toFixed(1)}°`;
+      document.getElementById('horizonBar').style.transform = `translateY(${p * 1.2}px) rotate(${-r}deg)`;
     }
     if (data.T !== undefined) {
-      const tVal = parseFloat(data.T);
-      document.getElementById('throttleReported').textContent = `${tVal.toFixed(0)} (${Math.round(tVal/2.55)}%)`;
+      document.getElementById('throttleReported').textContent = `${Math.round(parseFloat(data.T)/2.55)}%`;
     }
   }
 
-  // 40Hz BLE Loop (Yaw is locked to 0)
   setInterval(() => {
     if (isConnected) sendCommand(`J,${joyState.roll},${joyState.pitch},0,${joyState.throttle}`);
   }, 40);
 
-  function applyDeadzoneAndExpo(val, deadzone = 0.12) {
+  function applyDeadzone(val, deadzone = 0.12) {
     if (Math.abs(val) < deadzone) return 0;
     const sign = Math.sign(val);
     const scaled = (Math.abs(val) - deadzone) / (1 - deadzone);
     return Math.round(sign * (scaled * scaled * 0.3 + scaled * 0.7) * 100);
   }
 
-  // Throttle Slider Setup
+  // Throttle Slider
   function initThrottleSlider() {
     const track = document.getElementById('throttleTrack');
     const knob = document.getElementById('throttleKnob');
     const readout = document.getElementById('throttleReadout');
-
-    let active = false, touchId = null, posY = 1; // 1 = Bottom (0%)
+    let active = false, touchId = null, posY = 1;
 
     function update() {
-      const trackHeight = track.clientHeight - 50;
-      const topPx = posY * trackHeight;
-      knob.style.top = topPx + 'px';
-
+      const trackHeight = track.clientHeight - 40;
+      knob.style.top = (posY * trackHeight) + 'px';
       const hold = document.getElementById('holdThrottle').checked;
       let rawT = (1 - posY);
-
-      if (-posY < 0.02 && !hold) {
-        joyState.throttle = 0;
-      } else {
-        joyState.throttle = Math.round(Math.max(0, Math.min(100, rawT * 100)));
-      }
-      readout.textContent = `Thr: ${joyState.throttle}%`;
+      joyState.throttle = (-posY < 0.02 && !hold) ? 0 : Math.round(Math.max(0, Math.min(100, rawT * 100)));
+      readout.textContent = `${joyState.throttle}%`;
     }
 
     function handleStart(e) {
@@ -363,31 +345,23 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
       active = true; touchId = t.identifier ?? null;
       move(t);
     }
-
     function handleMove(e) {
       e.preventDefault();
       if (!active) return;
       const touches = e.changedTouches ? Array.from(e.changedTouches) : [e];
-      for (let t of touches) {
-        if (t.identifier === touchId || touchId === null) { move(t); break; }
-      }
+      for (let t of touches) { if (t.identifier === touchId || touchId === null) { move(t); break; } }
     }
-
     function handleEnd(e) {
       e.preventDefault();
       if (!active) return;
       active = false; touchId = null;
-      const hold = document.getElementById('holdThrottle').checked;
-      if (!hold) { posY = 1; }
+      if (!document.getElementById('holdThrottle').checked) posY = 1;
       update();
     }
-
     function move(t) {
       const rect = track.getBoundingClientRect();
-      const trackHeight = rect.height - 50;
-      let relY = t.clientY - (rect.top + 25);
-      relY = Math.max(0, Math.min(trackHeight, relY));
-      posY = relY / trackHeight;
+      const trackHeight = rect.height - 40;
+      posY = Math.max(0, Math.min(trackHeight, t.clientY - (rect.top + 20))) / trackHeight;
       update();
     }
 
@@ -397,23 +371,19 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
     update();
   }
 
-  // Right Joy-Con Setup (Roll / Pitch)
+  // Joy-Con
   function initJoyCon() {
     const container = document.getElementById('rightStick');
     const knob = container.querySelector('.knob');
     const readout = document.getElementById('rightReadout');
-
     let active = false, touchId = null, posX = 0, posY = 0;
 
     function update() {
-      const xPct = 33 + (posX * 33);
-      const yPct = 33 + (posY * 33);
-      knob.style.left = xPct + '%';
-      knob.style.top = yPct + '%';
-
-      joyState.roll = applyDeadzoneAndExpo(posX, 0.1);
-      joyState.pitch = applyDeadzoneAndExpo(-posY, 0.1);
-      readout.textContent = `Roll: ${joyState.roll} | Pitch: ${joyState.pitch}`;
+      knob.style.left = (32 + (posX * 32)) + '%';
+      knob.style.top = (32 + (posY * 32)) + '%';
+      joyState.roll = applyDeadzone(posX, 0.1);
+      joyState.pitch = applyDeadzone(-posY, 0.1);
+      readout.textContent = `R:${joyState.roll} P:${joyState.pitch}`;
     }
 
     function handleStart(e) {
@@ -423,16 +393,12 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
       active = true; touchId = t.identifier ?? null;
       move(t);
     }
-
     function handleMove(e) {
       e.preventDefault();
       if (!active) return;
       const touches = e.changedTouches ? Array.from(e.changedTouches) : [e];
-      for (let t of touches) {
-        if (t.identifier === touchId || touchId === null) { move(t); break; }
-      }
+      for (let t of touches) { if (t.identifier === touchId || touchId === null) { move(t); break; } }
     }
-
     function handleEnd(e) {
       e.preventDefault();
       if (!active) return;
@@ -440,18 +406,13 @@ button:disabled { opacity: 0.3; cursor: not-allowed; }
       posX = 0; posY = 0;
       update();
     }
-
     function move(t) {
       const rect = container.getBoundingClientRect();
       const r = rect.width / 2;
       let dx = t.clientX - (rect.left + r);
       let dy = t.clientY - (rect.top + r);
       const dist = Math.sqrt(dx * dx + dy * dy);
-
-      if (dist > r * 0.75) {
-        dx = (dx / dist) * (r * 0.75);
-        dy = (dy / dist) * (r * 0.75);
-      }
+      if (dist > r * 0.75) { dx = (dx / dist) * (r * 0.75); dy = (dy / dist) * (r * 0.75); }
       posX = dx / (r * 0.75);
       posY = dy / (r * 0.75);
       update();
