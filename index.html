@@ -30,10 +30,10 @@
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       --safe-top: env(safe-area-inset-top, 0px);
     }
-    * { 
-      box-sizing: border-box; 
-      user-select: none; 
-      -webkit-user-select: none; 
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
       touch-action: none;
       -webkit-touch-callout: none;
     }
@@ -54,13 +54,13 @@
     }
     button, input { font: inherit; }
     button { -webkit-tap-highlight-color: transparent; }
-    
+
     .app {
       width: 100%; height: 100%;
       padding: max(8px, var(--safe-top)) clamp(8px, 1.5vw, 16px) calc(8px + var(--safe-bottom));
       display: flex; flex-direction: column; gap: 6px; justify-content: space-between;
     }
-    
+
     .topbar {
       display: flex; align-items: center; justify-content: space-between; gap: 10px;
       padding: 6px 12px; border: 1px solid var(--border); border-radius: var(--radius);
@@ -76,7 +76,7 @@
     .brand-title { margin:0; font-size: 13px; font-weight: 900; letter-spacing:.1em; color: var(--cyan); }
     .brand-sub { color:var(--muted); font-size:9px; letter-spacing:.08em; text-transform:uppercase; }
     .status-group { display:flex; gap:6px; align-items:center; }
-    
+
     .pill {
       display:inline-flex; align-items:center; gap:5px; padding:4px 8px;
       border:1px solid var(--border); border-radius:999px; background:rgba(2,8,23,.45);
@@ -111,7 +111,7 @@
     .panel-head { display:flex; align-items:center; justify-content:space-between; gap:6px; width:100%; }
     .panel-title { margin:0; font-size:10px; font-weight:900; letter-spacing:.1em; text-transform:uppercase; }
     .panel-sub { color:var(--muted); font-size:9px; text-align:center; }
-    
+
     /* THROTTLE PANEL */
     .throttle-panel { display:flex; flex-direction:column; align-items:center; }
     .throttle-control {
@@ -152,7 +152,7 @@
     .btn-primary { background:#087e9b; border-color:#16a6c4; color:#fff; }
     .btn-safe { background:#075b49; border-color:#0d9a75; color:#a7f3d0; }
     .btn-danger { background:#7f1d32; border-color:#be3451; color:#fecdd3; }
-    
+
     .horizon-wrap { display:flex; flex-direction:column; align-items:center; gap:4px; }
     .horizon {
       width:min(20vh, 80px); aspect-ratio:1; position:relative; overflow:hidden;
@@ -161,6 +161,7 @@
     }
     .horizon-world {
       position:absolute; width:180%; height:180%; left:-40%; top:-40%;
+      transform-origin: 50% 50%;
       background:linear-gradient(to bottom, rgba(6,182,212,0.4) 0 50%, rgba(245,158,11,0.4) 50% 100%);
       transition:transform .05s linear;
     }
@@ -201,7 +202,7 @@
       border:1px solid var(--border); background:#050d18; color:#a8bbcf;
       font:9px/1.2 ui-monospace,monospace; white-space:pre-wrap;
     }
-    
+
     footer { display:none; }
   </style>
 </head>
@@ -267,7 +268,7 @@
           <button class="btn btn-primary" id="connectBtn">Connect BLE</button>
           <button class="btn" id="disconnectBtn" disabled>Drop</button>
         </div>
-        
+
         <div class="horizon-wrap">
           <div class="horizon">
             <div class="horizon-world" id="horizonWorld"></div>
@@ -275,7 +276,7 @@
           </div>
           <div class="horizon-caption">Attitude Fusion</div>
         </div>
-        
+
         <div class="button-row">
           <button class="btn btn-safe" id="armBtn" disabled>Arm</button>
           <button class="btn" id="disarmBtn" disabled>Disarm</button>
@@ -329,7 +330,8 @@
       connected: false, armed: false, imuReady: false, calReady: false,
       telemetryAt: 0, writeBusy: false, pendingCommand: null,
       roll: 0, pitch: 0, yaw: 0, throttle: 0,
-      lastCommand: "", commandTimer: null, pointerThrottle: null, pointerStick: null
+      lastCommand: "", commandTimer: null, pointerThrottle: null, pointerStick: null,
+      pendingArm: false
     };
 
     const encoder = new TextEncoder();
@@ -351,7 +353,13 @@
     function updateButtons() {
       $("connectBtn").disabled = state.connected;
       $("disconnectBtn").disabled = !state.connected;
-      $("armBtn").disabled = !state.connected || !state.imuReady || !state.calReady || state.armed || state.throttle > 0;
+      $("armBtn").disabled =
+        !state.connected ||
+        !state.imuReady ||
+        !state.calReady ||
+        state.armed ||
+        state.throttle > 0 ||
+        state.pendingArm;
       $("disarmBtn").disabled = !state.connected || !state.armed;
       $("stopBtn").disabled = !state.connected;
       setPill("connection", state.connected ? "CONN" : "DISC", state.connected ? "good" : "bad");
@@ -412,14 +420,24 @@
       else onDisconnected();
     }
 
-    async function sendImmediate(command) {
+    async function writeRaw(command) {
       if (!state.connected || !state.rx) return false;
+      while (state.writeBusy) {
+        await new Promise(r => setTimeout(r, 2));
+      }
+      state.writeBusy = true;
       try {
         await state.rx.writeValue(encoder.encode(command));
         return true;
       } catch (error) {
         return false;
+      } finally {
+        state.writeBusy = false;
       }
+    }
+
+    async function sendImmediate(command) {
+      return writeRaw(command);
     }
 
     function buildJoystickCommand() {
@@ -427,18 +445,11 @@
     }
 
     async function flushCommand() {
-      if (!state.connected || !state.rx || state.writeBusy) return;
+      if (!state.connected) return;
       const command = state.pendingCommand || buildJoystickCommand();
       state.pendingCommand = null;
-      if (command === state.lastCommand) return;
-      state.writeBusy = true;
-      try {
-        await state.rx.writeValue(encoder.encode(command));
+      if (await writeRaw(command)) {
         state.lastCommand = command;
-      } catch (error) {
-      } finally {
-        state.writeBusy = false;
-        if (state.pendingCommand && state.connected) queueMicrotask(flushCommand);
       }
     }
 
@@ -482,7 +493,8 @@
       const throttle = numeric(data, "T");
       if (roll !== null && pitch !== null) {
         $("attitude").textContent = `${roll.toFixed(1)}° / ${pitch.toFixed(1)}°`;
-        $("horizonWorld").style.transform = `translateY(${Math.max(-30, Math.min(30, pitch * 1.2))}px) rotate(${-roll}deg)`;
+        $("horizonWorld").style.transform =
+          `translateY(${Math.max(-30, Math.min(30, pitch * 1.2))}px) rotate(${-roll}deg)`;
       }
       if (throttle !== null) $("throttleReported").textContent = `${Math.round(throttle / 2.55)}%`;
       if (yawRate !== null) $("yawRate").textContent = `${yawRate.toFixed(1)}°/s`;
@@ -551,7 +563,9 @@
     function updateThrottleUI() {
       const track = $("throttleTrack");
       const knob = $("throttleKnob");
-      const range = Math.max(0, track.clientHeight - knob.offsetHeight - 4);
+      const trackH = track.clientHeight;
+      const knobH = knob.offsetHeight || 36;
+      const range = Math.max(0, trackH - knobH - 4);
       const y = (1 - state.throttle / 100) * range;
       knob.style.top = `${y}px`;
       $("throttleReadout").textContent = `${Math.round(state.throttle)}%`;
@@ -562,7 +576,7 @@
       const track = $("throttleTrack");
       function move(event) {
         const rect = track.getBoundingClientRect();
-        const knobHalf = $("throttleKnob").offsetHeight / 2;
+        const knobHalf = ($("throttleKnob").offsetHeight || 36) / 2;
         const usable = Math.max(1, rect.height - knobHalf * 2);
         const ratio = 1 - Math.max(0, Math.min(1, (event.clientY - rect.top - knobHalf) / usable));
         state.throttle = Math.round(ratio * 100);
@@ -594,7 +608,15 @@
     $("connectBtn").addEventListener("click", connectBLE);
     $("disconnectBtn").addEventListener("click", disconnectBLE);
     $("armBtn").addEventListener("click", async () => {
-      if (await sendImmediate("ARM")) log("ARM command sent.");
+      state.pendingArm = true;
+      updateButtons();
+      if (await sendImmediate("ARM")) {
+        log("ARM command sent.");
+      }
+      setTimeout(() => {
+        state.pendingArm = false;
+        updateButtons();
+      }, 800);
     });
     $("disarmBtn").addEventListener("click", async () => {
       if (await sendImmediate("DISARM")) log("DISARM command sent.");
