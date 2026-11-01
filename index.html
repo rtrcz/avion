@@ -349,8 +349,8 @@
   const RX_UUID      = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
   const TX_UUID      = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
   const DEVICE_NAME  = "ESP32S3_Brushed_FC";
-  const COMMAND_MS   = 50;    // 20 Hz joystick frames (well under 500 ms firmware timeout)
-  const STALE_MS     = 1500;  // if no telemetry for this long, mark link as stale
+  const COMMAND_MS   = 50;    // 20 Hz joystick frames
+  const STALE_MS     = 1500;  // telemetry timeout threshold
 
   const REJECT_MAP = {
     0: "OK", 1: "NO IMU", 2: "NOT CAL", 3: "NO BLE",
@@ -362,7 +362,6 @@
   const S = {
     device: null, server: null, rx: null, tx: null,
     connected: false,
-    // telemetry
     flightState: "DISARMED",
     reject: 0,
     upsideDown: false,
@@ -372,9 +371,7 @@
     batV: 0,
     frontMm: 0,
     lastTelemetryAt: 0,
-    // inputs
     roll: 0, pitch: 0, yaw: 0, throttle: 0,
-    // runtime
     writeBusy: false,
     timer: null,
     ptrThrottle: null,
@@ -398,7 +395,6 @@
     el.append(d, document.createTextNode(" " + text));
   }
 
-  // ---------- UI state ----------
   function refreshUI() {
     const usable = S.connected && S.imuReady && S.calReady;
     const teleFresh = S.connected && (Date.now() - S.lastTelemetryAt) < STALE_MS;
@@ -426,7 +422,7 @@
     setPill("imuStatus", imuOK ? "IMU OK" : "IMU FAULT", imuOK ? "good" : "warn");
 
     let faultText = "OK", faultKind = "good";
-    if (S.upsideDown)      { faultText = "UPSIDE DOWN"; faultKind = "bad"; }
+    if (S.upsideDown)       { faultText = "UPSIDE DOWN"; faultKind = "bad"; }
     else if (S.reject !== 0) { faultText = REJECT_MAP[S.reject] || "REJECT"; faultKind = "warn"; }
     else if (S.obstacle)   { faultText = "OBSTACLE";    faultKind = "warn"; }
     setPill("faultStatus", faultText, faultKind);
@@ -446,14 +442,12 @@
     updateStickUI();
   }
 
-  // ---------- Throttle ----------
   function updateThrottleUI() {
     const track = $("throttleTrack");
     const knob  = $("throttleKnob");
     const trackH = track.clientHeight;
     const knobH  = knob.clientHeight || 22;
     const usable = Math.max(1, trackH - knobH - 4);
-    // 0% -> bottom (bottom:0), 100% -> top
     knob.style.bottom = `${(S.throttle / 100) * usable}px`;
     $("throttleReadout").textContent = `${Math.round(S.throttle)}%`;
   }
@@ -464,7 +458,6 @@
       const rect = track.getBoundingClientRect();
       const knobH = $("throttleKnob").clientHeight || 22;
       const usable = Math.max(1, rect.height - knobH - 4);
-      // top = max, bottom = min
       const yFromTop = ev.clientY - rect.top - (knobH / 2) - 2;
       const ratio = 1 - Math.max(0, Math.min(1, yFromTop / usable));
       S.throttle = Math.round(ratio * 100);
@@ -492,7 +485,6 @@
     });
   }
 
-  // ---------- Stick ----------
   function applyDeadzone(v, dz = 0.10) {
     const m = Math.abs(v);
     if (m <= dz) return 0;
@@ -539,7 +531,6 @@
     stick.addEventListener("lostpointercapture", release);
   }
 
-  // ---------- BLE ----------
   async function writeRaw(text) {
     if (!S.connected || !S.rx) return false;
     while (S.writeBusy) await new Promise(r => setTimeout(r, 1));
@@ -564,7 +555,6 @@
     S.timer = setInterval(async () => {
       if (!S.connected) return;
       await writeRaw(buildCommand());
-      // refresh UI on stale detection
       refreshUI();
     }, COMMAND_MS);
   }
@@ -615,10 +605,8 @@
     else onDisconnected();
   }
 
-  // ---------- Telemetry parsing ----------
   function parseKV(raw) {
     const out = {};
-    // split respecting bracketed array values like PWM:[1,2,3,4]
     let depth = 0, start = 0;
     const parts = [];
     for (let i = 0; i < raw.length; i++) {
@@ -638,4 +626,90 @@
   function num(d, k) {
     if (!(k in d)) return null;
     const v = Number(d[k]);
-    return Number.isFinite(v
+    return Number.isFinite(v) ? v : null;
+  }
+
+  function onTelemetry(event) {
+    const str = dec.decode(event.target.value);
+    const kv = parseKV(str);
+    S.lastTelemetryAt = Date.now();
+
+    if ("ST" in kv) S.flightState = kv.ST;
+    if ("REJ" in kv) S.reject = Number(kv.REJ) || 0;
+    if ("UP" in kv) S.upsideDown = kv.UP === "1";
+    if ("OBS" in kv) S.obstacle = kv.OBS === "1";
+    if ("IMU" in kv) S.imuReady = kv.IMU === "1";
+    if ("CAL" in kv) S.calReady = kv.CAL === "1";
+
+    const vBat = num(kv, "BAT");
+    if (vBat !== null) {
+      S.batV = vBat;
+      $("batteryVoltage").textContent = `${vBat.toFixed(2)} V`;
+      $("batteryVoltage").style.color = vBat < 3.4 ? "var(--red)" : vBat < 3.6 ? "var(--amber)" : "var(--green)";
+    }
+
+    const dist = num(kv, "RNG");
+    if (dist !== null) {
+      S.frontMm = dist;
+      $("frontRange").textContent = dist < 0 ? "OUT" : `${dist} mm`;
+      $("frontRange").style.color = (dist > 0 && dist < 300) ? "var(--red)" : "var(--cyan)";
+    }
+
+    const r = num(kv, "R"), p = num(kv, "P");
+    if (r !== null && p !== null) {
+      $("attitude").textContent = `${r.toFixed(1)}° / ${p.toFixed(1)}°`;
+      const world = $("horizonWorld");
+      world.style.transform = `rotate(${-r}deg) translateY(${p * 0.8}px)`;
+    }
+
+    if ("PWM" in kv) $("pwmValue").textContent = kv.PWM;
+    if ("BMF" in kv) $("bemfValue").textContent = kv.BMF;
+    if ("GZ" in kv)  $("gyroRate").textContent = `${num(kv, "GZ") || 0} deg/s`;
+    
+    $("obstacleValue").textContent = S.obstacle ? "YES" : "NO";
+    $("obstacleValue").style.color = S.obstacle ? "var(--amber)" : "var(--cyan)";
+    $("upsideValue").textContent   = S.upsideDown ? "YES" : "NO";
+    $("upsideValue").style.color   = S.upsideDown ? "var(--red)" : "var(--cyan)";
+    $("rejectValue").textContent   = REJECT_MAP[S.reject] || "OK";
+
+    refreshUI();
+  }
+
+  async function sendArm() {
+    if (S.pendingArm) return;
+    S.pendingArm = true;
+    refreshUI();
+    log("Sending ARM command...");
+    const ok = await writeRaw("ARM");
+    if (ok) log("ARM sent.");
+    S.pendingArm = false;
+    refreshUI();
+  }
+
+  async function sendDisarm() {
+    log("Sending DISARM command...");
+    await writeRaw("DISARM");
+  }
+
+  async function sendStop() {
+    log("EMERGENCY STOP TRIGGERED!");
+    S.throttle = 0;
+    updateThrottleUI();
+    await writeRaw("STOP");
+  }
+
+  window.addEventListener("DOMContentLoaded", () => {
+    initThrottle();
+    initStick();
+
+    $("connectBtn").addEventListener("click", connectBLE);
+    $("disconnectBtn").addEventListener("click", disconnectBLE);
+    $("armBtn").addEventListener("click", sendArm);
+    $("disarmBtn").addEventListener("click", sendDisarm);
+    $("stopBtn").addEventListener("click", sendStop);
+
+    refreshUI();
+  });
+  </script>
+</body>
+</html>
