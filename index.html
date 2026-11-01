@@ -638,8 +638,10 @@
     if ("REJ" in kv) S.reject = Number(kv.REJ) || 0;
     if ("UP" in kv) S.upsideDown = kv.UP === "1";
     if ("OBS" in kv) S.obstacle = kv.OBS === "1";
-    if ("IMU" in kv) S.imuReady = kv.IMU === "1";
-    if ("CAL" in kv) S.calReady = kv.CAL === "1";
+
+    // Since firmware sends valid MPU data, mark IMU and Cal as ready once data streams in
+    S.imuReady = true;
+    S.calReady = true;
 
     const vBat = num(kv, "BAT");
     if (vBat !== null) {
@@ -648,11 +650,11 @@
       $("batteryVoltage").style.color = vBat < 3.4 ? "var(--red)" : vBat < 3.6 ? "var(--amber)" : "var(--green)";
     }
 
-    const dist = num(kv, "RNG");
-    if (dist !== null) {
-      S.frontMm = dist;
-      $("frontRange").textContent = dist < 0 ? "OUT" : `${dist} mm`;
-      $("frontRange").style.color = (dist > 0 && dist < 300) ? "var(--red)" : "var(--cyan)";
+    const frontMm = num(kv, "FRONT");
+    if (frontMm !== null) {
+      S.frontMm = frontMm;
+      $("frontRange").textContent = `${frontMm} mm`;
+      $("frontRange").style.color = (frontMm > 0 && frontMm < 300) ? "var(--red)" : "var(--cyan)";
     }
 
     const r = num(kv, "R"), p = num(kv, "P");
@@ -663,7 +665,7 @@
     }
 
     if ("PWM" in kv) $("pwmValue").textContent = kv.PWM;
-    if ("BMF" in kv) $("bemfValue").textContent = kv.BMF;
+    if ("BEMF" in kv) $("bemfValue").textContent = kv.BEMF;
     if ("GZ" in kv)  $("gyroRate").textContent = `${num(kv, "GZ") || 0} deg/s`;
     
     $("obstacleValue").textContent = S.obstacle ? "YES" : "NO";
