@@ -57,7 +57,7 @@
     .app {
       width: 100%; height: 100%;
       padding: max(4px, var(--safe-top)) 8px calc(4px + var(--safe-bottom));
-      display: flex; flex-direction: column; gap: 5px; justify-content: space-between;
+      display: flex; flex-direction: column; gap: 4px; justify-content: space-between;
     }
 
     .topbar {
@@ -87,13 +87,13 @@
     .pill.bad { color:var(--red); border-color:rgba(251,113,133,.3); background:var(--red-soft); }
     .pill.warn { color:var(--amber); border-color:rgba(251,191,36,.28); }
 
-    .metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:5px; flex-shrink: 0; }
+    .metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:4px; flex-shrink: 0; }
     .metric, .panel {
       border:1px solid var(--border); border-radius:var(--radius);
       background:var(--panel); box-shadow:var(--shadow); min-width:0;
     }
-    .metric { padding:4px 6px; text-align: center; }
-    .metric-label, .eyebrow {
+    .metric { padding:3px 5px; text-align: center; }
+    .metric-label {
       color:var(--muted); font-size:7px; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
     }
     .metric-value {
@@ -102,10 +102,10 @@
     }
 
     .workspace {
-      display:grid; grid-template-columns: 110px 1fr 130px;
-      gap:6px; flex: 1; min-height: 0; align-items: stretch;
+      display:grid; grid-template-columns: 105px 1fr 125px;
+      gap:4px; flex: 1; min-height: 0; align-items: stretch;
     }
-    .panel { padding:6px; display:flex; flex-direction:column; justify-content:space-between; align-items:center; }
+    .panel { padding:5px; display:flex; flex-direction:column; justify-content:space-between; align-items:center; }
     .panel-head { display:flex; align-items:center; justify-content:space-between; gap:4px; width:100%; }
     .panel-title { margin:0; font-size:9px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
 
@@ -116,8 +116,8 @@
       justify-content:space-between; gap:4px; padding:2px 0;
     }
     .throttle-track {
-      position:relative; width:38px; height:100%; max-height:130px;
-      border:2px solid var(--border-strong); border-radius:19px;
+      position:relative; width:36px; height:100%; max-height:120px;
+      border:2px solid var(--border-strong); border-radius:18px;
       background:linear-gradient(180deg,rgba(2,8,23,.9),rgba(15,30,49,.95));
       box-shadow:inset 0 0 12px rgba(0,0,0,.45); cursor:ns-resize;
     }
@@ -126,8 +126,8 @@
       transform:translateX(-50%); border-radius:2px; background:rgba(148,163,184,.2);
     }
     .throttle-knob {
-      position:absolute; left:50%; top:calc(100% - 30px); transform:translateX(-50%);
-      width:30px; height:30px; border-radius:50%; border:2px solid #b8f5ff;
+      position:absolute; left:50%; top:calc(100% - 28px); transform:translateX(-50%);
+      width:28px; height:28px; border-radius:50%; border:2px solid #b8f5ff;
       background:linear-gradient(145deg,#40e0f3,#087eaa); box-shadow:0 0 10px rgba(56,213,238,.38);
       pointer-events:none;
     }
@@ -140,8 +140,8 @@
     .center-panel { display:flex; flex-direction:column; align-items:center; justify-content:space-between; }
     .button-row { display:flex; gap:4px; width:100%; justify-content:center; }
     .btn {
-      min-height:26px; padding:3px 8px; border:1px solid var(--border-strong); border-radius:5px;
-      color:var(--text); background:#1b2b41; font-size:9px; font-weight:900; letter-spacing:.04em;
+      min-height:24px; padding:2px 6px; border:1px solid var(--border-strong); border-radius:5px;
+      color:var(--text); background:#1b2b41; font-size:8px; font-weight:900; letter-spacing:.04em;
       text-transform:uppercase; cursor:pointer;
     }
     .btn:active:not(:disabled) { transform:scale(.95); }
@@ -152,9 +152,9 @@
 
     .horizon-wrap { display:flex; flex-direction:column; align-items:center; gap:2px; }
     .horizon {
-      width:min(16vh, 65px); aspect-ratio:1; position:relative; overflow:hidden;
+      width:min(14vh, 55px); aspect-ratio:1; position:relative; overflow:hidden;
       border:2px solid #53677e; border-radius:50%; background:#07101e;
-      box-shadow:inset 0 0 12px rgba(0,0,0,.55);
+      box-shadow:inset 0 0 10px rgba(0,0,0,.55);
     }
     .horizon-world {
       position:absolute; width:180%; height:180%; left:-40%; top:-40%;
@@ -164,16 +164,16 @@
     }
     .horizon-world::after { content:""; position:absolute; top:50%; left:0; width:100%; height:2px; background:#22d3ee; }
     .horizon-mark { position:absolute; inset:0; display:grid; place-items:center; pointer-events:none; }
-    .horizon-mark span { width:24px; height:6px; border-left:2px solid #36d399; border-right:2px solid #36d399; position:relative; }
+    .horizon-mark span { width:20px; height:5px; border-left:2px solid #36d399; border-right:2px solid #36d399; position:relative; }
     .horizon-caption { color:var(--muted); font-size:7px; letter-spacing:.08em; text-transform:uppercase; }
 
     /* JOYSTICK PANEL */
     .stick-panel { display:flex; flex-direction:column; align-items:center; }
     .stick-wrap { display:flex; flex:1; align-items:center; justify-content:center; width:100%; }
     .stick {
-      width:min(100%, 100px); aspect-ratio:1; position:relative; border:2px solid var(--border-strong);
+      width:min(100%, 90px); aspect-ratio:1; position:relative; border:2px solid var(--border-strong);
       border-radius:50%; background:radial-gradient(circle,#14243a 0,#07101e 72%);
-      box-shadow:inset 0 0 12px rgba(0,0,0,.6); cursor:crosshair;
+      box-shadow:inset 0 0 10px rgba(0,0,0,.6); cursor:crosshair;
     }
     .stick::before { content:""; position:absolute; inset:20%; border:1px dashed rgba(148,163,184,.25); border-radius:50%; }
     .stick::after { content:""; position:absolute; top:50%; left:10%; right:10%; height:1px; background:rgba(148,163,184,.2); }
@@ -184,18 +184,18 @@
       box-shadow:0 0 10px rgba(56,213,238,.35); pointer-events:none;
     }
     .readout {
-      width:100%; text-align:center; border:1px solid var(--border); border-radius:5px;
-      padding:3px; background:rgba(2,8,23,.45); color:var(--cyan);
-      font:700 9px ui-monospace,monospace;
+      width:100%; text-align:center; border:1px solid var(--border); border-radius:4px;
+      padding:2px; background:rgba(2,8,23,.45); color:var(--cyan);
+      font:700 8px ui-monospace,monospace;
     }
 
     /* LOWER SECTION */
-    .lower-grid { display:grid; grid-template-columns:1fr 1fr; gap:5px; flex-shrink:0; }
-    .telemetry-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:3px; width:100%; }
-    .telemetry-item { padding:3px 4px; border-radius:5px; background:rgba(2,8,23,.35); border:1px solid var(--border); text-align:center; }
-    .telemetry-item .metric-value { font-size:10px; }
+    .lower-section { display:flex; flex-direction:column; gap:4px; flex-shrink:0; }
+    .telemetry-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:3px; width:100%; }
+    .telemetry-item { padding:2px 4px; border-radius:4px; background:rgba(2,8,23,.35); border:1px solid var(--border); text-align:center; }
+    .telemetry-item .metric-value { font-size:9px; }
     .log {
-      height: 28px; overflow-y:auto; padding:3px 5px; border-radius:5px;
+      height: 24px; overflow-y:auto; padding:2px 4px; border-radius:4px;
       border:1px solid var(--border); background:#050d18; color:#a8bbcf;
       font:8px/1.2 ui-monospace,monospace; white-space:pre-wrap;
     }
@@ -218,27 +218,28 @@
       </div>
     </header>
 
+    <!-- MAIN DASHBOARD METRICS -->
     <section class="metrics">
+      <article class="metric">
+        <div class="metric-label">1S Battery</div>
+        <div class="metric-value" id="batteryVoltage" style="color:var(--green);">— V</div>
+      </article>
+      <article class="metric">
+        <div class="metric-label">ToF Altitude</div>
+        <div class="metric-value" id="tofRange">— mm</div>
+      </article>
       <article class="metric">
         <div class="metric-label">Roll / Pitch</div>
         <div class="metric-value" id="attitude">0.0° / 0.0°</div>
       </article>
       <article class="metric">
-        <div class="metric-label">Throttle</div>
+        <div class="metric-label">Throttle Out</div>
         <div class="metric-value" id="throttleReported">0%</div>
-      </article>
-      <article class="metric">
-        <div class="metric-label">Battery</div>
-        <div class="metric-value" id="batteryVoltage">—</div>
-      </article>
-      <article class="metric">
-        <div class="metric-label">ToF Range</div>
-        <div class="metric-value" id="tofRange">—</div>
       </article>
     </section>
 
     <section class="workspace">
-      <!-- THROTTLE -->
+      <!-- THROTTLE PANEL -->
       <section class="panel throttle-panel">
         <div class="panel-head">
           <h2 class="panel-title">Throttle</h2>
@@ -269,7 +270,7 @@
             <div class="horizon-world" id="horizonWorld"></div>
             <div class="horizon-mark"><span></span></div>
           </div>
-          <div class="horizon-caption">Attitude Fusion</div>
+          <div class="horizon-caption">Attitude</div>
         </div>
 
         <div class="button-row">
@@ -279,7 +280,7 @@
         </div>
       </section>
 
-      <!-- JOYSTICK -->
+      <!-- JOYSTICK PANEL -->
       <section class="panel stick-panel">
         <div class="panel-head">
           <h2 class="panel-title">Roll / Pitch</h2>
@@ -294,19 +295,18 @@
       </section>
     </section>
 
-    <section class="lower-grid">
-      <section class="panel" style="padding:3px;">
-        <div class="telemetry-grid">
-          <div class="telemetry-item"><div class="metric-label">Yaw Rate</div><div class="metric-value" id="yawRate">—</div></div>
-          <div class="telemetry-item"><div class="metric-label">Gyro X</div><div class="metric-value" id="gyroX">—</div></div>
-          <div class="telemetry-item"><div class="metric-label">IMU</div><div class="metric-value" id="imuValue">—</div></div>
-          <div class="telemetry-item"><div class="metric-label">CAL</div><div class="metric-value" id="calValue">—</div></div>
-        </div>
-      </section>
+    <!-- DETAILED SENSOR & MOTOR TELEMETRY -->
+    <section class="lower-section">
+      <div class="telemetry-grid">
+        <div class="telemetry-item"><div class="metric-label">PWM Cycles</div><div class="metric-value" id="pwmValue">—</div></div>
+        <div class="telemetry-item"><div class="metric-label">BEMF ADC</div><div class="metric-value" id="bemfValue">—</div></div>
+        <div class="telemetry-item"><div class="metric-label">Est. RPM</div><div class="metric-value" id="rpmValue">—</div></div>
+        <div class="telemetry-item"><div class="metric-label">Gyro Rate</div><div class="metric-value" id="gyroRate">—</div></div>
+        <div class="telemetry-item"><div class="metric-label">IMU Sensor</div><div class="metric-value" id="imuValue">—</div></div>
+        <div class="telemetry-item"><div class="metric-label">Cal Status</div><div class="metric-value" id="calValue">—</div></div>
+      </div>
 
-      <section class="panel" style="padding:3px;">
-        <div class="log" id="log">AVION Deck ready. Click Connect BLE.</div>
-      </section>
+      <div class="log" id="log">AVION Deck ready. Click Connect BLE.</div>
     </section>
   </main>
 
@@ -456,6 +456,7 @@
         }
       }, COMMAND_INTERVAL_MS);
     }
+
     function stopCommandLoop() {
       if (state.commandTimer !== null) clearInterval(state.commandTimer);
       state.commandTimer = null;
@@ -469,6 +470,7 @@
       }
       return data;
     }
+
     function numeric(data, key) {
       if (!(key in data)) return null;
       const n = Number(data[key]);
@@ -481,27 +483,35 @@
       const data = parseTelemetry(raw);
       state.telemetryAt = Date.now();
 
-      const roll = numeric(data, "R");
-      const pitch = numeric(data, "P");
-      const yawRate = numeric(data, "GZ");
-      const throttle = numeric(data, "T");
-      if (roll !== null && pitch !== null) {
-        $("attitude").textContent = `${roll.toFixed(1)}° / ${pitch.toFixed(1)}°`;
-        $("horizonWorld").style.transform =
-          `translateY(${Math.max(-30, Math.min(30, pitch * 1.2))}px) rotate(${-roll}deg)`;
-      }
-      if (throttle !== null) $("throttleReported").textContent = `${Math.round(throttle / 2.55)}%`;
-      if (yawRate !== null) $("yawRate").textContent = `${yawRate.toFixed(1)}°/s`;
-
-      const gx = numeric(data, "GX");
-      if (gx !== null) $("gyroX").textContent = `${gx.toFixed(1)}°/s`;
-
+      // Battery & ToF Sensors
       const bat = data["BAT"];
       if (bat) $("batteryVoltage").textContent = bat;
 
       const tof = numeric(data, "ToF");
-      if (tof !== null) $("tofRange").textContent = `${tof}mm`;
+      if (tof !== null) $("tofRange").textContent = `${tof} mm`;
 
+      // Flight Attitude
+      const roll = numeric(data, "R");
+      const pitch = numeric(data, "P");
+      if (roll !== null && pitch !== null) {
+        $("attitude").textContent = `${roll.toFixed(1)}° / ${pitch.toFixed(1)}°`;
+        $("horizonWorld").style.transform =
+          `translateY(${Math.max(-25, Math.min(25, pitch * 1.2))}px) rotate(${-roll}deg)`;
+      }
+
+      // Throttle & Gyro
+      const throttle = numeric(data, "T");
+      if (throttle !== null) $("throttleReported").textContent = `${Math.round(throttle / 2.55)}%`;
+
+      const gz = numeric(data, "GZ");
+      if (gz !== null) $("gyroRate").textContent = `${gz.toFixed(1)}°/s`;
+
+      // Motor & BEMF Telemetry arrays
+      if (data["PWM"]) $("pwmValue").textContent = data["PWM"];
+      if (data["BEMF"]) $("bemfValue").textContent = data["BEMF"];
+      if (data["RPM"]) $("rpmValue").textContent = data["RPM"];
+
+      // Status Flags
       const imu = numeric(data, "IMU");
       const cal = numeric(data, "CAL");
       const arm = numeric(data, "ARM");
@@ -562,7 +572,7 @@
       const track = $("throttleTrack");
       const knob = $("throttleKnob");
       const trackH = track.clientHeight;
-      const knobH = knob.offsetHeight || 30;
+      const knobH = knob.offsetHeight || 28;
       const range = Math.max(0, trackH - knobH - 4);
       const y = (1 - state.throttle / 100) * range;
       knob.style.top = `${y}px`;
@@ -574,7 +584,7 @@
       const track = $("throttleTrack");
       function move(event) {
         const rect = track.getBoundingClientRect();
-        const knobHalf = ($("throttleKnob").offsetHeight || 30) / 2;
+        const knobHalf = ($("throttleKnob").offsetHeight || 28) / 2;
         const usable = Math.max(1, rect.height - knobHalf * 2);
         const ratio = 1 - Math.max(0, Math.min(1, (event.clientY - rect.top - knobHalf) / usable));
         state.throttle = Math.round(ratio * 100);
