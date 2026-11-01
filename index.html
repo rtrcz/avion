@@ -11,8 +11,7 @@
       color-scheme: dark;
       --bg: #07111f;
       --bg-grid: rgba(148,163,184,.035);
-      --panel: rgba(15, 27, 45, .92);
-      --panel-2: #101e31;
+      --panel: rgba(15, 27, 45, .95);
       --border: rgba(148,163,184,.16);
       --border-strong: rgba(148,163,184,.28);
       --cyan: #38d5ee;
@@ -25,8 +24,8 @@
       --text: #eef6ff;
       --muted: #91a4bb;
       --muted-2: #647991;
-      --radius: 12px;
-      --shadow: 0 10px 30px rgba(0,0,0,.24);
+      --radius: 10px;
+      --shadow: 0 4px 20px rgba(0,0,0,.3);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       --safe-top: env(safe-area-inset-top, 0px);
     }
@@ -49,7 +48,7 @@
         linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px),
         var(--bg);
       background-size: auto, auto, 20px 20px, 20px 20px, auto;
-      font: 12px/1.3 Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+      font: 11px/1.2 Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
       -webkit-font-smoothing: antialiased;
     }
     button, input { font: inherit; }
@@ -57,94 +56,92 @@
 
     .app {
       width: 100%; height: 100%;
-      padding: max(8px, var(--safe-top)) clamp(8px, 1.5vw, 16px) calc(8px + var(--safe-bottom));
-      display: flex; flex-direction: column; gap: 6px; justify-content: space-between;
+      padding: max(4px, var(--safe-top)) 8px calc(4px + var(--safe-bottom));
+      display: flex; flex-direction: column; gap: 5px; justify-content: space-between;
     }
 
     .topbar {
-      display: flex; align-items: center; justify-content: space-between; gap: 10px;
-      padding: 6px 12px; border: 1px solid var(--border); border-radius: var(--radius);
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      padding: 4px 10px; border: 1px solid var(--border); border-radius: var(--radius);
       background: var(--panel); box-shadow: var(--shadow); backdrop-filter: blur(12px);
       flex-shrink: 0;
     }
-    .brand { display:flex; align-items:center; gap:8px; min-width:0; }
+    .brand { display:flex; align-items:center; gap:6px; min-width:0; }
     .brand-mark {
-      width: 28px; height: 28px; flex: 0 0 auto; display:grid; place-items:center;
-      border-radius: 8px; color: var(--cyan); background: var(--cyan-soft);
-      border: 1px solid rgba(56,213,238,.28); font-size: 14px; font-weight: 900;
+      width: 24px; height: 24px; flex: 0 0 auto; display:grid; place-items:center;
+      border-radius: 6px; color: var(--cyan); background: var(--cyan-soft);
+      border: 1px solid rgba(56,213,238,.28); font-size: 12px; font-weight: 900;
     }
-    .brand-title { margin:0; font-size: 13px; font-weight: 900; letter-spacing:.1em; color: var(--cyan); }
-    .brand-sub { color:var(--muted); font-size:9px; letter-spacing:.08em; text-transform:uppercase; }
-    .status-group { display:flex; gap:6px; align-items:center; }
+    .brand-title { margin:0; font-size: 11px; font-weight: 900; letter-spacing:.08em; color: var(--cyan); }
+    .brand-sub { color:var(--muted); font-size:8px; letter-spacing:.06em; text-transform:uppercase; }
+    .status-group { display:flex; gap:4px; align-items:center; }
 
     .pill {
-      display:inline-flex; align-items:center; gap:5px; padding:4px 8px;
+      display:inline-flex; align-items:center; gap:4px; padding:3px 6px;
       border:1px solid var(--border); border-radius:999px; background:rgba(2,8,23,.45);
-      color:var(--muted); font-size:9px; font-weight:800; letter-spacing:.06em;
+      color:var(--muted); font-size:8px; font-weight:800; letter-spacing:.05em;
       white-space:nowrap;
     }
-    .dot { width:6px; height:6px; border-radius:50%; background:currentColor; box-shadow:0 0 8px currentColor; }
+    .dot { width:5px; height:5px; border-radius:50%; background:currentColor; box-shadow:0 0 6px currentColor; }
     .pill.good { color:var(--green); border-color:rgba(54,211,153,.28); background:var(--green-soft); }
     .pill.bad { color:var(--red); border-color:rgba(251,113,133,.3); background:var(--red-soft); }
     .pill.warn { color:var(--amber); border-color:rgba(251,191,36,.28); }
 
-    .metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; flex-shrink: 0; }
+    .metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:5px; flex-shrink: 0; }
     .metric, .panel {
       border:1px solid var(--border); border-radius:var(--radius);
       background:var(--panel); box-shadow:var(--shadow); min-width:0;
     }
-    .metric { padding:5px 8px; text-align: center; }
+    .metric { padding:4px 6px; text-align: center; }
     .metric-label, .eyebrow {
-      color:var(--muted); font-size:8px; font-weight:800; letter-spacing:.1em; text-transform:uppercase;
+      color:var(--muted); font-size:7px; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
     }
     .metric-value {
-      margin-top:2px; color:var(--cyan); font:700 13px ui-monospace,monospace;
+      margin-top:1px; color:var(--cyan); font:700 11px ui-monospace,monospace;
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
-    .metric-note { margin-top:1px; color:var(--muted-2); font-size:8px; display:none; }
 
     .workspace {
-      display:grid; grid-template-columns: 130px 1fr 160px;
-      gap:8px; flex: 1; min-height: 0; align-items: stretch;
+      display:grid; grid-template-columns: 110px 1fr 130px;
+      gap:6px; flex: 1; min-height: 0; align-items: stretch;
     }
-    .panel { padding:8px; display:flex; flex-direction:column; justify-content:space-between; align-items:center; }
-    .panel-head { display:flex; align-items:center; justify-content:space-between; gap:6px; width:100%; }
-    .panel-title { margin:0; font-size:10px; font-weight:900; letter-spacing:.1em; text-transform:uppercase; }
-    .panel-sub { color:var(--muted); font-size:9px; text-align:center; }
+    .panel { padding:6px; display:flex; flex-direction:column; justify-content:space-between; align-items:center; }
+    .panel-head { display:flex; align-items:center; justify-content:space-between; gap:4px; width:100%; }
+    .panel-title { margin:0; font-size:9px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
 
     /* THROTTLE PANEL */
     .throttle-panel { display:flex; flex-direction:column; align-items:center; }
     .throttle-control {
       width:100%; flex:1; display:flex; flex-direction:column; align-items:center;
-      justify-content:space-between; gap:6px; padding:4px 0;
+      justify-content:space-between; gap:4px; padding:2px 0;
     }
     .throttle-track {
-      position:relative; width:44px; height:100%; max-height:150px;
-      border:2px solid var(--border-strong); border-radius:22px;
+      position:relative; width:38px; height:100%; max-height:130px;
+      border:2px solid var(--border-strong); border-radius:19px;
       background:linear-gradient(180deg,rgba(2,8,23,.9),rgba(15,30,49,.95));
-      box-shadow:inset 0 0 15px rgba(0,0,0,.45); cursor:ns-resize;
+      box-shadow:inset 0 0 12px rgba(0,0,0,.45); cursor:ns-resize;
     }
     .throttle-track::before {
-      content:""; position:absolute; top:10px; bottom:10px; left:50%; width:3px;
+      content:""; position:absolute; top:8px; bottom:8px; left:50%; width:2px;
       transform:translateX(-50%); border-radius:2px; background:rgba(148,163,184,.2);
     }
     .throttle-knob {
-      position:absolute; left:50%; top:calc(100% - 36px); transform:translateX(-50%);
-      width:36px; height:36px; border-radius:50%; border:2px solid #b8f5ff;
-      background:linear-gradient(145deg,#40e0f3,#087eaa); box-shadow:0 0 12px rgba(56,213,238,.38);
+      position:absolute; left:50%; top:calc(100% - 30px); transform:translateX(-50%);
+      width:30px; height:30px; border-radius:50%; border:2px solid #b8f5ff;
+      background:linear-gradient(145deg,#40e0f3,#087eaa); box-shadow:0 0 10px rgba(56,213,238,.38);
       pointer-events:none;
     }
-    .range-labels { position:absolute; left:calc(100% + 6px); top:6px; bottom:6px; display:flex; flex-direction:column; justify-content:space-between; color:var(--muted-2); font-size:8px; }
-    .control-value { color:var(--cyan); font:700 11px ui-monospace,monospace; text-align:center; }
-    .hold-row { display:flex; align-items:center; gap:4px; color:var(--muted); font-size:9px; cursor:pointer; }
-    .hold-row input { accent-color:var(--cyan); width:12px; height:12px; }
+    .range-labels { position:absolute; left:calc(100% + 4px); top:4px; bottom:4px; display:flex; flex-direction:column; justify-content:space-between; color:var(--muted-2); font-size:7px; }
+    .control-value { color:var(--cyan); font:700 10px ui-monospace,monospace; text-align:center; }
+    .hold-row { display:flex; align-items:center; gap:3px; color:var(--muted); font-size:8px; cursor:pointer; }
+    .hold-row input { accent-color:var(--cyan); width:10px; height:10px; }
 
     /* CENTER PANEL */
     .center-panel { display:flex; flex-direction:column; align-items:center; justify-content:space-between; }
-    .button-row { display:flex; gap:6px; width:100%; justify-content:center; }
+    .button-row { display:flex; gap:4px; width:100%; justify-content:center; }
     .btn {
-      min-height:30px; padding:4px 10px; border:1px solid var(--border-strong); border-radius:6px;
-      color:var(--text); background:#1b2b41; font-size:10px; font-weight:900; letter-spacing:.05em;
+      min-height:26px; padding:3px 8px; border:1px solid var(--border-strong); border-radius:5px;
+      color:var(--text); background:#1b2b41; font-size:9px; font-weight:900; letter-spacing:.04em;
       text-transform:uppercase; cursor:pointer;
     }
     .btn:active:not(:disabled) { transform:scale(.95); }
@@ -153,11 +150,11 @@
     .btn-safe { background:#075b49; border-color:#0d9a75; color:#a7f3d0; }
     .btn-danger { background:#7f1d32; border-color:#be3451; color:#fecdd3; }
 
-    .horizon-wrap { display:flex; flex-direction:column; align-items:center; gap:4px; }
+    .horizon-wrap { display:flex; flex-direction:column; align-items:center; gap:2px; }
     .horizon {
-      width:min(20vh, 80px); aspect-ratio:1; position:relative; overflow:hidden;
+      width:min(16vh, 65px); aspect-ratio:1; position:relative; overflow:hidden;
       border:2px solid #53677e; border-radius:50%; background:#07101e;
-      box-shadow:inset 0 0 15px rgba(0,0,0,.55);
+      box-shadow:inset 0 0 12px rgba(0,0,0,.55);
     }
     .horizon-world {
       position:absolute; width:180%; height:180%; left:-40%; top:-40%;
@@ -167,43 +164,41 @@
     }
     .horizon-world::after { content:""; position:absolute; top:50%; left:0; width:100%; height:2px; background:#22d3ee; }
     .horizon-mark { position:absolute; inset:0; display:grid; place-items:center; pointer-events:none; }
-    .horizon-mark span { width:30px; height:8px; border-left:2px solid #36d399; border-right:2px solid #36d399; position:relative; }
-    .horizon-caption { color:var(--muted); font-size:8px; letter-spacing:.1em; text-transform:uppercase; }
+    .horizon-mark span { width:24px; height:6px; border-left:2px solid #36d399; border-right:2px solid #36d399; position:relative; }
+    .horizon-caption { color:var(--muted); font-size:7px; letter-spacing:.08em; text-transform:uppercase; }
 
     /* JOYSTICK PANEL */
     .stick-panel { display:flex; flex-direction:column; align-items:center; }
     .stick-wrap { display:flex; flex:1; align-items:center; justify-content:center; width:100%; }
     .stick {
-      width:min(100%, 120px); aspect-ratio:1; position:relative; border:2px solid var(--border-strong);
+      width:min(100%, 100px); aspect-ratio:1; position:relative; border:2px solid var(--border-strong);
       border-radius:50%; background:radial-gradient(circle,#14243a 0,#07101e 72%);
-      box-shadow:inset 0 0 15px rgba(0,0,0,.6); cursor:crosshair;
+      box-shadow:inset 0 0 12px rgba(0,0,0,.6); cursor:crosshair;
     }
     .stick::before { content:""; position:absolute; inset:20%; border:1px dashed rgba(148,163,184,.25); border-radius:50%; }
     .stick::after { content:""; position:absolute; top:50%; left:10%; right:10%; height:1px; background:rgba(148,163,184,.2); }
     .stick-axis { position:absolute; left:50%; top:10%; bottom:10%; width:1px; background:rgba(148,163,184,.2); }
     .stick-knob {
-      position:absolute; left:50%; top:50%; width:36%; aspect-ratio:1; transform:translate(-50%,-50%);
+      position:absolute; left:50%; top:50%; width:34%; aspect-ratio:1; transform:translate(-50%,-50%);
       border-radius:50%; border:2px solid #b8f5ff; background:linear-gradient(145deg,#40e0f3,#087eaa);
-      box-shadow:0 0 12px rgba(56,213,238,.35); pointer-events:none;
+      box-shadow:0 0 10px rgba(56,213,238,.35); pointer-events:none;
     }
     .readout {
-      width:100%; text-align:center; border:1px solid var(--border); border-radius:6px;
-      padding:4px; background:rgba(2,8,23,.45); color:var(--cyan);
-      font:700 10px ui-monospace,monospace;
+      width:100%; text-align:center; border:1px solid var(--border); border-radius:5px;
+      padding:3px; background:rgba(2,8,23,.45); color:var(--cyan);
+      font:700 9px ui-monospace,monospace;
     }
 
     /* LOWER SECTION */
-    .lower-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; flex-shrink:0; }
-    .telemetry-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:4px; width:100%; }
-    .telemetry-item { padding:4px 6px; border-radius:6px; background:rgba(2,8,23,.35); border:1px solid var(--border); text-align:center; }
-    .telemetry-item .metric-value { font-size:11px; }
+    .lower-grid { display:grid; grid-template-columns:1fr 1fr; gap:5px; flex-shrink:0; }
+    .telemetry-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:3px; width:100%; }
+    .telemetry-item { padding:3px 4px; border-radius:5px; background:rgba(2,8,23,.35); border:1px solid var(--border); text-align:center; }
+    .telemetry-item .metric-value { font-size:10px; }
     .log {
-      height: 32px; overflow-y:auto; padding:4px 6px; border-radius:6px;
+      height: 28px; overflow-y:auto; padding:3px 5px; border-radius:5px;
       border:1px solid var(--border); background:#050d18; color:#a8bbcf;
-      font:9px/1.2 ui-monospace,monospace; white-space:pre-wrap;
+      font:8px/1.2 ui-monospace,monospace; white-space:pre-wrap;
     }
-
-    footer { display:none; }
   </style>
 </head>
 <body>
@@ -233,12 +228,12 @@
         <div class="metric-value" id="throttleReported">0%</div>
       </article>
       <article class="metric">
-        <div class="metric-label">Yaw Rate</div>
-        <div class="metric-value" id="yawRate">0.0°/s</div>
+        <div class="metric-label">Battery</div>
+        <div class="metric-value" id="batteryVoltage">—</div>
       </article>
       <article class="metric">
-        <div class="metric-label">Controller</div>
-        <div class="metric-value" id="controllerStatus">WAITING</div>
+        <div class="metric-label">ToF Range</div>
+        <div class="metric-value" id="tofRange">—</div>
       </article>
     </section>
 
@@ -255,7 +250,7 @@
           </div>
           <div>
             <div class="control-value" id="throttleReadout">0%</div>
-            <label class="hold-row" style="margin-top:4px">
+            <label class="hold-row" style="margin-top:2px">
               <input type="checkbox" id="holdThrottle" checked> Hold
             </label>
           </div>
@@ -300,16 +295,16 @@
     </section>
 
     <section class="lower-grid">
-      <section class="panel" style="padding:4px;">
+      <section class="panel" style="padding:3px;">
         <div class="telemetry-grid">
+          <div class="telemetry-item"><div class="metric-label">Yaw Rate</div><div class="metric-value" id="yawRate">—</div></div>
           <div class="telemetry-item"><div class="metric-label">Gyro X</div><div class="metric-value" id="gyroX">—</div></div>
-          <div class="telemetry-item"><div class="metric-label">Gyro Y</div><div class="metric-value" id="gyroY">—</div></div>
           <div class="telemetry-item"><div class="metric-label">IMU</div><div class="metric-value" id="imuValue">—</div></div>
           <div class="telemetry-item"><div class="metric-label">CAL</div><div class="metric-value" id="calValue">—</div></div>
         </div>
       </section>
 
-      <section class="panel" style="padding:4px;">
+      <section class="panel" style="padding:3px;">
         <div class="log" id="log">AVION Deck ready. Click Connect BLE.</div>
       </section>
     </section>
@@ -410,7 +405,6 @@
       stopCommandLoop();
       resetControls();
       updateButtons();
-      $("controllerStatus").textContent = "OFFLINE";
       log("BLE disconnected.");
     }
 
@@ -499,9 +493,14 @@
       if (throttle !== null) $("throttleReported").textContent = `${Math.round(throttle / 2.55)}%`;
       if (yawRate !== null) $("yawRate").textContent = `${yawRate.toFixed(1)}°/s`;
 
-      const gx = numeric(data, "GX"), gy = numeric(data, "GY");
+      const gx = numeric(data, "GX");
       if (gx !== null) $("gyroX").textContent = `${gx.toFixed(1)}°/s`;
-      if (gy !== null) $("gyroY").textContent = `${gy.toFixed(1)}°/s`;
+
+      const bat = data["BAT"];
+      if (bat) $("batteryVoltage").textContent = bat;
+
+      const tof = numeric(data, "ToF");
+      if (tof !== null) $("tofRange").textContent = `${tof}mm`;
 
       const imu = numeric(data, "IMU");
       const cal = numeric(data, "CAL");
@@ -510,7 +509,6 @@
       if (cal !== null) { state.calReady = cal === 1; $("calValue").textContent = state.calReady ? "OK" : "NO"; }
       if (arm !== null) state.armed = arm === 1;
 
-      $("controllerStatus").textContent = (state.imuReady && state.calReady) ? "READY" : "FAULT";
       updateButtons();
     }
 
@@ -564,7 +562,7 @@
       const track = $("throttleTrack");
       const knob = $("throttleKnob");
       const trackH = track.clientHeight;
-      const knobH = knob.offsetHeight || 36;
+      const knobH = knob.offsetHeight || 30;
       const range = Math.max(0, trackH - knobH - 4);
       const y = (1 - state.throttle / 100) * range;
       knob.style.top = `${y}px`;
@@ -576,7 +574,7 @@
       const track = $("throttleTrack");
       function move(event) {
         const rect = track.getBoundingClientRect();
-        const knobHalf = ($("throttleKnob").offsetHeight || 36) / 2;
+        const knobHalf = ($("throttleKnob").offsetHeight || 30) / 2;
         const usable = Math.max(1, rect.height - knobHalf * 2);
         const ratio = 1 - Math.max(0, Math.min(1, (event.clientY - rect.top - knobHalf) / usable));
         state.throttle = Math.round(ratio * 100);
