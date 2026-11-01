@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#07111f">
-  <meta name="description" content="AVION Controller — responsive ESP32-S3 brushed quadcopter flight deck">
+  <meta name="description" content="AVION Controller — ESP32-S3 brushed quadcopter flight deck">
   <title>AVION Controller — Flight Deck</title>
   <style>
     :root {
@@ -12,6 +12,7 @@
       --bg: #07111f;
       --bg-grid: rgba(148,163,184,.035);
       --panel: rgba(15, 27, 45, .95);
+      --panel-2: rgba(9, 18, 32, .95);
       --border: rgba(148,163,184,.16);
       --border-strong: rgba(148,163,184,.28);
       --cyan: #38d5ee;
@@ -21,13 +22,16 @@
       --red: #fb7185;
       --red-soft: rgba(251,113,133,.13);
       --amber: #fbbf24;
+      --amber-soft: rgba(251,191,36,.13);
       --text: #eef6ff;
       --muted: #91a4bb;
       --muted-2: #647991;
-      --radius: 10px;
+      --radius: 8px;
       --shadow: 0 4px 20px rgba(0,0,0,.3);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       --safe-top: env(safe-area-inset-top, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
     }
     * {
       box-sizing: border-box;
@@ -56,93 +60,110 @@
 
     .app {
       width: 100%; height: 100%;
-      padding: max(4px, var(--safe-top)) 8px calc(4px + var(--safe-bottom));
-      display: flex; flex-direction: column; gap: 4px; justify-content: space-between;
+      padding:
+        max(4px, var(--safe-top))
+        max(6px, var(--safe-right))
+        max(4px, var(--safe-bottom))
+        max(6px, var(--safe-left));
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 4px;
+      overflow: hidden;
     }
 
+    /* ===== TOP BAR ===== */
     .topbar {
-      display: flex; align-items: center; justify-content: space-between; gap: 8px;
-      padding: 4px 10px; border: 1px solid var(--border); border-radius: var(--radius);
+      display: flex; align-items: center; justify-content: space-between; gap: 6px;
+      padding: 3px 8px; border: 1px solid var(--border); border-radius: var(--radius);
       background: var(--panel); box-shadow: var(--shadow); backdrop-filter: blur(12px);
-      flex-shrink: 0;
+      min-height: 0;
     }
     .brand { display:flex; align-items:center; gap:6px; min-width:0; }
     .brand-mark {
-      width: 24px; height: 24px; flex: 0 0 auto; display:grid; place-items:center;
+      width: 22px; height: 22px; flex: 0 0 auto; display:grid; place-items:center;
       border-radius: 6px; color: var(--cyan); background: var(--cyan-soft);
-      border: 1px solid rgba(56,213,238,.28); font-size: 12px; font-weight: 900;
+      border: 1px solid rgba(56,213,238,.28); font-size: 11px; font-weight: 900;
     }
-    .brand-title { margin:0; font-size: 11px; font-weight: 900; letter-spacing:.08em; color: var(--cyan); }
-    .brand-sub { color:var(--muted); font-size:8px; letter-spacing:.06em; text-transform:uppercase; }
-    .status-group { display:flex; gap:4px; align-items:center; }
+    .brand-title { margin:0; font-size: 10px; font-weight: 900; letter-spacing:.08em; color: var(--cyan); line-height: 1.1; }
+    .brand-sub { color:var(--muted); font-size:7px; letter-spacing:.06em; text-transform:uppercase; }
+    .status-group { display:flex; gap:3px; align-items:center; flex-wrap: nowrap; }
 
     .pill {
-      display:inline-flex; align-items:center; gap:4px; padding:3px 6px;
+      display:inline-flex; align-items:center; gap:3px; padding:2px 5px;
       border:1px solid var(--border); border-radius:999px; background:rgba(2,8,23,.45);
-      color:var(--muted); font-size:8px; font-weight:800; letter-spacing:.05em;
+      color:var(--muted); font-size:7.5px; font-weight:800; letter-spacing:.05em;
       white-space:nowrap;
     }
     .dot { width:5px; height:5px; border-radius:50%; background:currentColor; box-shadow:0 0 6px currentColor; }
     .pill.good { color:var(--green); border-color:rgba(54,211,153,.28); background:var(--green-soft); }
     .pill.bad { color:var(--red); border-color:rgba(251,113,133,.3); background:var(--red-soft); }
-    .pill.warn { color:var(--amber); border-color:rgba(251,191,36,.28); }
+    .pill.warn { color:var(--amber); border-color:rgba(251,191,36,.28); background:var(--amber-soft); }
 
-    .metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:4px; flex-shrink: 0; }
+    /* ===== TOP METRICS ===== */
+    .metrics {
+      display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:3px;
+    }
     .metric, .panel {
       border:1px solid var(--border); border-radius:var(--radius);
       background:var(--panel); box-shadow:var(--shadow); min-width:0;
     }
-    .metric { padding:3px 5px; text-align: center; }
+    .metric { padding:2px 4px; text-align: center; }
     .metric-label {
-      color:var(--muted); font-size:7px; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
+      color:var(--muted); font-size:6.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .metric-value {
-      margin-top:1px; color:var(--cyan); font:700 11px ui-monospace,monospace;
+      margin-top:1px; color:var(--cyan); font:700 10px ui-monospace,monospace;
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
 
+    /* ===== WORKSPACE (3 columns) ===== */
     .workspace {
-      display:grid; grid-template-columns: 105px 1fr 125px;
-      gap:4px; flex: 1; min-height: 0; align-items: stretch;
+      display:grid;
+      grid-template-columns: 78px 1fr 112px;
+      gap:4px;
+      min-height: 0;
+      overflow: hidden;
     }
-    .panel { padding:5px; display:flex; flex-direction:column; justify-content:space-between; align-items:center; }
-    .panel-head { display:flex; align-items:center; justify-content:space-between; gap:4px; width:100%; }
-    .panel-title { margin:0; font-size:9px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
+    .panel { padding:4px; display:flex; flex-direction:column; justify-content:space-between; align-items:center; min-height:0; overflow:hidden; }
+    .panel-head { display:flex; align-items:center; justify-content:space-between; gap:3px; width:100%; flex-shrink:0; }
+    .panel-title { margin:0; font-size:8px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
 
-    /* THROTTLE PANEL */
-    .throttle-panel { display:flex; flex-direction:column; align-items:center; }
+    /* ===== THROTTLE ===== */
+    .throttle-panel { align-items: center; }
     .throttle-control {
       width:100%; flex:1; display:flex; flex-direction:column; align-items:center;
-      justify-content:space-between; gap:4px; padding:2px 0;
+      gap:3px; padding:1px 0; min-height:0;
     }
     .throttle-track {
-      position:relative; width:36px; height:100%; max-height:120px;
-      border:2px solid var(--border-strong); border-radius:18px;
+      position:relative; width:32px; flex:1; min-height:60px;
+      border:2px solid var(--border-strong); border-radius:16px;
       background:linear-gradient(180deg,rgba(2,8,23,.9),rgba(15,30,49,.95));
       box-shadow:inset 0 0 12px rgba(0,0,0,.45); cursor:ns-resize;
+      touch-action: none;
     }
     .throttle-track::before {
-      content:""; position:absolute; top:8px; bottom:8px; left:50%; width:2px;
+      content:""; position:absolute; top:6px; bottom:6px; left:50%; width:2px;
       transform:translateX(-50%); border-radius:2px; background:rgba(148,163,184,.2);
     }
     .throttle-knob {
-      position:absolute; left:50%; top:calc(100% - 28px); transform:translateX(-50%);
-      width:28px; height:28px; border-radius:50%; border:2px solid #b8f5ff;
+      position:absolute; left:50%; bottom:0; transform:translateX(-50%);
+      width:22px; height:22px; border-radius:50%; border:2px solid #b8f5ff;
       background:linear-gradient(145deg,#40e0f3,#087eaa); box-shadow:0 0 10px rgba(56,213,238,.38);
       pointer-events:none;
     }
-    .range-labels { position:absolute; left:calc(100% + 4px); top:4px; bottom:4px; display:flex; flex-direction:column; justify-content:space-between; color:var(--muted-2); font-size:7px; }
-    .control-value { color:var(--cyan); font:700 10px ui-monospace,monospace; text-align:center; }
-    .hold-row { display:flex; align-items:center; gap:3px; color:var(--muted); font-size:8px; cursor:pointer; }
-    .hold-row input { accent-color:var(--cyan); width:10px; height:10px; }
+    .range-labels { position:absolute; left:calc(100% + 3px); top:3px; bottom:3px; display:flex; flex-direction:column; justify-content:space-between; color:var(--muted-2); font-size:6px; }
+    .control-value { color:var(--cyan); font:700 9px ui-monospace,monospace; text-align:center; }
+    .hold-row { display:flex; align-items:center; gap:3px; color:var(--muted); font-size:7px; cursor:pointer; }
+    .hold-row input { accent-color:var(--cyan); width:9px; height:9px; }
 
-    /* CENTER PANEL */
-    .center-panel { display:flex; flex-direction:column; align-items:center; justify-content:space-between; }
-    .button-row { display:flex; gap:4px; width:100%; justify-content:center; }
+    /* ===== CENTER PANEL ===== */
+    .center-panel { display:flex; flex-direction:column; align-items:center; justify-content:space-between; gap:3px; }
+    .button-row { display:flex; gap:3px; width:100%; justify-content:center; flex-shrink:0; }
     .btn {
-      min-height:24px; padding:2px 6px; border:1px solid var(--border-strong); border-radius:5px;
-      color:var(--text); background:#1b2b41; font-size:8px; font-weight:900; letter-spacing:.04em;
-      text-transform:uppercase; cursor:pointer;
+      min-height:22px; padding:2px 5px; border:1px solid var(--border-strong); border-radius:5px;
+      color:var(--text); background:#1b2b41; font-size:7.5px; font-weight:900; letter-spacing:.04em;
+      text-transform:uppercase; cursor:pointer; flex:1; white-space:nowrap;
     }
     .btn:active:not(:disabled) { transform:scale(.95); }
     .btn:disabled { opacity:.35; cursor:not-allowed; }
@@ -150,9 +171,9 @@
     .btn-safe { background:#075b49; border-color:#0d9a75; color:#a7f3d0; }
     .btn-danger { background:#7f1d32; border-color:#be3451; color:#fecdd3; }
 
-    .horizon-wrap { display:flex; flex-direction:column; align-items:center; gap:2px; }
+    .horizon-wrap { display:flex; flex-direction:column; align-items:center; gap:2px; flex:1; justify-content:center; min-height:0; }
     .horizon {
-      width:min(14vh, 55px); aspect-ratio:1; position:relative; overflow:hidden;
+      width:min(13vh, 68px); aspect-ratio:1; position:relative; overflow:hidden;
       border:2px solid #53677e; border-radius:50%; background:#07101e;
       box-shadow:inset 0 0 10px rgba(0,0,0,.55);
     }
@@ -164,45 +185,81 @@
     }
     .horizon-world::after { content:""; position:absolute; top:50%; left:0; width:100%; height:2px; background:#22d3ee; }
     .horizon-mark { position:absolute; inset:0; display:grid; place-items:center; pointer-events:none; }
-    .horizon-mark span { width:20px; height:5px; border-left:2px solid #36d399; border-right:2px solid #36d399; position:relative; }
-    .horizon-caption { color:var(--muted); font-size:7px; letter-spacing:.08em; text-transform:uppercase; }
+    .horizon-mark span { width:18px; height:4px; border-left:2px solid #36d399; border-right:2px solid #36d399; position:relative; }
+    .horizon-caption { color:var(--muted); font-size:6.5px; letter-spacing:.08em; text-transform:uppercase; }
 
-    /* JOYSTICK PANEL */
-    .stick-panel { display:flex; flex-direction:column; align-items:center; }
-    .stick-wrap { display:flex; flex:1; align-items:center; justify-content:center; width:100%; }
+    /* ===== JOYSTICK ===== */
+    .stick-panel { align-items: center; }
+    .stick-wrap { display:flex; flex:1; align-items:center; justify-content:center; width:100%; min-height:0; }
     .stick {
-      width:min(100%, 90px); aspect-ratio:1; position:relative; border:2px solid var(--border-strong);
+      width:min(100%, 86px); aspect-ratio:1; max-height: 100%; position:relative;
+      border:2px solid var(--border-strong);
       border-radius:50%; background:radial-gradient(circle,#14243a 0,#07101e 72%);
       box-shadow:inset 0 0 10px rgba(0,0,0,.6); cursor:crosshair;
+      touch-action: none;
     }
     .stick::before { content:""; position:absolute; inset:20%; border:1px dashed rgba(148,163,184,.25); border-radius:50%; }
     .stick::after { content:""; position:absolute; top:50%; left:10%; right:10%; height:1px; background:rgba(148,163,184,.2); }
     .stick-axis { position:absolute; left:50%; top:10%; bottom:10%; width:1px; background:rgba(148,163,184,.2); }
     .stick-knob {
-      position:absolute; left:50%; top:50%; width:34%; aspect-ratio:1; transform:translate(-50%,-50%);
+      position:absolute; left:50%; top:50%; width:32%; aspect-ratio:1; transform:translate(-50%,-50%);
       border-radius:50%; border:2px solid #b8f5ff; background:linear-gradient(145deg,#40e0f3,#087eaa);
       box-shadow:0 0 10px rgba(56,213,238,.35); pointer-events:none;
     }
     .readout {
       width:100%; text-align:center; border:1px solid var(--border); border-radius:4px;
       padding:2px; background:rgba(2,8,23,.45); color:var(--cyan);
-      font:700 8px ui-monospace,monospace;
+      font:700 7.5px ui-monospace,monospace; flex-shrink:0;
     }
 
-    /* LOWER SECTION */
-    .lower-section { display:flex; flex-direction:column; gap:4px; flex-shrink:0; }
-    .telemetry-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:3px; width:100%; }
-    .telemetry-item { padding:2px 4px; border-radius:4px; background:rgba(2,8,23,.35); border:1px solid var(--border); text-align:center; }
-    .telemetry-item .metric-value { font-size:9px; }
+    /* ===== LOWER TELEMETRY ===== */
+    .lower-section {
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr auto;
+      gap:3px;
+      align-items: stretch;
+      min-height: 0;
+    }
+    .telemetry-item {
+      padding:2px 3px; border-radius:4px; background:rgba(2,8,23,.35);
+      border:1px solid var(--border); text-align:center; min-width:0;
+    }
+    .telemetry-item .metric-value { font-size:8.5px; }
     .log {
-      height: 24px; overflow-y:auto; padding:2px 4px; border-radius:4px;
+      grid-column: 1 / -1;
+      height: 22px; overflow-y:auto; padding:2px 4px; border-radius:4px;
       border:1px solid var(--border); background:#050d18; color:#a8bbcf;
-      font:8px/1.2 ui-monospace,monospace; white-space:pre-wrap;
+      font:7.5px/1.15 ui-monospace,monospace; white-space:pre-wrap;
+      flex-shrink: 0;
+    }
+
+    /* ===== LANDSCAPE STRICT ===== */
+    @media (max-height: 380px) {
+      .app { padding: 2px 4px; gap: 2px; }
+      .topbar { padding: 2px 6px; min-height: 24px; }
+      .brand-mark { width: 18px; height: 18px; font-size: 10px; }
+      .brand-title { font-size: 9px; }
+      .brand-sub { font-size: 6px; }
+      .pill { font-size: 7px; padding: 1px 4px; }
+      .metric-label { font-size: 6px; }
+      .metric-value { font-size: 9px; }
+      .workspace { grid-template-columns: 68px 1fr 100px; }
+      .panel-title { font-size: 7px; }
+      .btn { min-height: 18px; font-size: 7px; padding: 1px 4px; }
+      .horizon { width: min(12vh, 56px); }
+      .stick { width: min(100%, 74px); }
+      .telemetry-item .metric-value { font-size: 7.5px; }
+      .log { height: 18px; font-size: 7px; }
+    }
+    @media (max-height: 320px) {
+      .horizon { width: 48px; }
+      .stick { width: 64px; }
     }
   </style>
 </head>
 <body>
   <main class="app">
+    <!-- TOP BAR -->
     <header class="topbar">
       <div class="brand">
         <div class="brand-mark" aria-hidden="true">A</div>
@@ -213,33 +270,35 @@
       </div>
       <div class="status-group">
         <span id="connection" class="pill bad"><i class="dot"></i> DISC</span>
-        <span id="armStatus" class="pill"><i class="dot"></i> SAFE</span>
-        <span id="imuStatus" class="pill warn"><i class="dot"></i> IMU UNKNOWN</span>
+        <span id="armStatus" class="pill"><i class="dot"></i> DISARMED</span>
+        <span id="imuStatus" class="pill warn"><i class="dot"></i> IMU ?</span>
+        <span id="faultStatus" class="pill"><i class="dot"></i> OK</span>
       </div>
     </header>
 
-    <!-- MAIN DASHBOARD METRICS -->
+    <!-- TOP METRICS -->
     <section class="metrics">
       <article class="metric">
-        <div class="metric-label">1S Battery</div>
+        <div class="metric-label">Battery</div>
         <div class="metric-value" id="batteryVoltage" style="color:var(--green);">— V</div>
       </article>
       <article class="metric">
-        <div class="metric-label">ToF Altitude</div>
-        <div class="metric-value" id="tofRange">— mm</div>
+        <div class="metric-label">Front Range</div>
+        <div class="metric-value" id="frontRange">— mm</div>
       </article>
       <article class="metric">
         <div class="metric-label">Roll / Pitch</div>
         <div class="metric-value" id="attitude">0.0° / 0.0°</div>
       </article>
       <article class="metric">
-        <div class="metric-label">Throttle Out</div>
-        <div class="metric-value" id="throttleReported">0%</div>
+        <div class="metric-label">State</div>
+        <div class="metric-value" id="stateValue">DISARMED</div>
       </article>
     </section>
 
+    <!-- WORKSPACE -->
     <section class="workspace">
-      <!-- THROTTLE PANEL -->
+      <!-- THROTTLE -->
       <section class="panel throttle-panel">
         <div class="panel-head">
           <h2 class="panel-title">Throttle</h2>
@@ -249,16 +308,16 @@
             <div class="throttle-knob" id="throttleKnob"></div>
             <div class="range-labels"><span>MAX</span><span>MIN</span></div>
           </div>
-          <div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
             <div class="control-value" id="throttleReadout">0%</div>
-            <label class="hold-row" style="margin-top:2px">
+            <label class="hold-row">
               <input type="checkbox" id="holdThrottle" checked> Hold
             </label>
           </div>
         </div>
       </section>
 
-      <!-- INSTRUMENTS & ACTIONS -->
+      <!-- CENTER -->
       <section class="panel center-panel">
         <div class="button-row">
           <button class="btn btn-primary" id="connectBtn">Connect BLE</button>
@@ -280,7 +339,7 @@
         </div>
       </section>
 
-      <!-- JOYSTICK PANEL -->
+      <!-- STICK -->
       <section class="panel stick-panel">
         <div class="panel-head">
           <h2 class="panel-title">Roll / Pitch</h2>
@@ -295,18 +354,15 @@
       </section>
     </section>
 
-    <!-- DETAILED SENSOR & MOTOR TELEMETRY -->
+    <!-- LOWER TELEMETRY -->
     <section class="lower-section">
-      <div class="telemetry-grid">
-        <div class="telemetry-item"><div class="metric-label">PWM Cycles</div><div class="metric-value" id="pwmValue">—</div></div>
-        <div class="telemetry-item"><div class="metric-label">BEMF ADC</div><div class="metric-value" id="bemfValue">—</div></div>
-        <div class="telemetry-item"><div class="metric-label">Est. RPM</div><div class="metric-value" id="rpmValue">—</div></div>
-        <div class="telemetry-item"><div class="metric-label">Gyro Rate</div><div class="metric-value" id="gyroRate">—</div></div>
-        <div class="telemetry-item"><div class="metric-label">IMU Sensor</div><div class="metric-value" id="imuValue">—</div></div>
-        <div class="telemetry-item"><div class="metric-label">Cal Status</div><div class="metric-value" id="calValue">—</div></div>
-      </div>
-
-      <div class="log" id="log">AVION Deck ready. Click Connect BLE.</div>
+      <div class="telemetry-item"><div class="metric-label">PWM</div><div class="metric-value" id="pwmValue">—</div></div>
+      <div class="telemetry-item"><div class="metric-label">BEMF</div><div class="metric-value" id="bemfValue">—</div></div>
+      <div class="telemetry-item"><div class="metric-label">Gyro Z</div><div class="metric-value" id="gyroRate">—</div></div>
+      <div class="telemetry-item"><div class="metric-label">Obstacle</div><div class="metric-value" id="obstacleValue">—</div></div>
+      <div class="telemetry-item"><div class="metric-label">Upside</div><div class="metric-value" id="upsideValue">—</div></div>
+      <div class="telemetry-item"><div class="metric-label">Reject</div><div class="metric-value" id="rejectValue">—</div></div>
+      <div class="log" id="log">AVION deck ready. Tap Connect BLE.</div>
     </section>
   </main>
 
@@ -316,19 +372,46 @@
     const SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
     const RX_UUID      = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
     const TX_UUID      = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
-    
-    const DEVICE_NAME = "ESP32S3_Brushed_FC";
-    
+    const DEVICE_NAME  = "ESP32S3_Brushed_FC";
     const COMMAND_INTERVAL_MS = 50;
+    const TELEMETRY_STALE_MS  = 1200;
+
+    const REJECT_MAP = {
+      0: "OK",
+      1: "NO IMU",
+      2: "NOT CAL",
+      3: "NO BLE",
+      4: "THR HI",
+      5: "NOT LVL",
+      6: "UPSIDE"
+    };
 
     const $ = (id) => document.getElementById(id);
     const state = {
       device: null, server: null, rx: null, tx: null,
-      connected: false, armed: false, imuReady: false, calReady: false,
-      telemetryAt: 0, writeBusy: false, pendingCommand: null,
+      connected: false,
+      // telemetry-derived
+      armed: false,
+      flightState: "DISARMED",
+      reject: 0,
+      upsideDown: false,
+      obstacle: false,
+      imuReady: false,
+      calReady: false,
+      batV: 0,
+      frontMm: 0,
+      // inputs
       roll: 0, pitch: 0, yaw: 0, throttle: 0,
-      lastCommand: "", commandTimer: null, pointerThrottle: null, pointerStick: null,
-      pendingArm: false
+      // runtime
+      telemetryAt: 0,
+      writeBusy: false,
+      commandTimer: null,
+      pointerThrottle: null,
+      pointerStick: null,
+      pendingArm: false,
+      lastPwm: "—",
+      lastBemf: "—",
+      lastGz: null
     };
 
     const encoder = new TextEncoder();
@@ -348,21 +431,41 @@
     }
 
     function updateButtons() {
-      $("connectBtn").disabled = state.connected;
+      const usable = state.connected && state.imuReady && state.calReady;
+      $("connectBtn").disabled   = state.connected;
       $("disconnectBtn").disabled = !state.connected;
       $("armBtn").disabled =
-        !state.connected ||
-        !state.imuReady ||
-        !state.calReady ||
-        state.armed ||
+        !usable ||
+        state.flightState === "ARMED" ||
         state.throttle > 0 ||
-        state.pendingArm;
-      $("disarmBtn").disabled = !state.connected || !state.armed;
-      $("stopBtn").disabled = !state.connected;
+        state.pendingArm ||
+        state.upsideDown;
+      $("disarmBtn").disabled = !state.connected || state.flightState !== "ARMED";
+      $("stopBtn").disabled   = !state.connected;
+
       setPill("connection", state.connected ? "CONN" : "DISC", state.connected ? "good" : "bad");
-      setPill("armStatus", state.armed ? "ARMED" : "SAFE", state.armed ? "bad" : "");
-      setPill("imuStatus", state.imuReady && state.calReady ? "IMU OK" : "IMU FAULT",
-        state.imuReady && state.calReady ? "good" : "warn");
+
+      let armText = "DISARMED", armKind = "";
+      if (state.flightState === "ARMED") { armText = "ARMED"; armKind = "bad"; }
+      else if (state.flightState === "FAILSAFE") { armText = "FAILSAFE"; armKind = "bad"; }
+      else if (state.flightState === "ARMING") { armText = "ARMING"; armKind = "warn"; }
+      setPill("armStatus", armText, armKind);
+
+      const imuOK = state.imuReady && state.calReady;
+      setPill("imuStatus", imuOK ? "IMU OK" : "IMU FAULT", imuOK ? "good" : "warn");
+
+      // Fault pill: shows upside-down / obstacle / reject
+      let faultText = "OK", faultKind = "good";
+      if (state.upsideDown) { faultText = "UPSIDE DOWN"; faultKind = "bad"; }
+      else if (state.reject !== 0) { faultText = REJECT_MAP[state.reject] || "REJECT"; faultKind = "warn"; }
+      else if (state.obstacle) { faultText = "OBSTACLE"; faultKind = "warn"; }
+      setPill("faultStatus", faultText, faultKind);
+
+      $("stateValue").textContent = state.flightState;
+      $("stateValue").style.color =
+        state.flightState === "ARMED"    ? "var(--red)" :
+        state.flightState === "FAILSAFE" ? "var(--red)" :
+        state.flightState === "ARMING"   ? "var(--amber)" : "var(--cyan)";
     }
 
     function resetControls() {
@@ -403,6 +506,7 @@
     function onDisconnected() {
       state.connected = false;
       state.armed = false;
+      state.flightState = "DISARMED";
       state.rx = null; state.tx = null;
       stopCommandLoop();
       resetControls();
@@ -411,16 +515,14 @@
     }
 
     async function disconnectBLE() {
-      try { await sendImmediate("STOP"); } catch (_) {}
+      try { await sendImmediate("DISARM"); } catch (_) {}
       if (state.device?.gatt?.connected) state.device.gatt.disconnect();
       else onDisconnected();
     }
 
     async function writeRaw(command) {
       if (!state.connected || !state.rx) return false;
-      while (state.writeBusy) {
-        await new Promise(r => setTimeout(r, 2));
-      }
+      while (state.writeBusy) await new Promise(r => setTimeout(r, 2));
       state.writeBusy = true;
       try {
         await state.rx.writeValue(encoder.encode(command));
@@ -432,30 +534,18 @@
       }
     }
 
-    async function sendImmediate(command) {
-      return writeRaw(command);
-    }
+    function sendImmediate(command) { return writeRaw(command); }
 
     function buildJoystickCommand() {
       return `J,${Math.round(state.roll)},${Math.round(state.pitch)},${Math.round(state.yaw)},${Math.round(state.throttle)}`;
     }
 
-    async function flushCommand() {
-      if (!state.connected) return;
-      const command = state.pendingCommand || buildJoystickCommand();
-      state.pendingCommand = null;
-      if (await writeRaw(command)) {
-        state.lastCommand = command;
-      }
-    }
-
     function startCommandLoop() {
       stopCommandLoop();
-      state.commandTimer = window.setInterval(() => {
-        if (state.connected) {
-          state.pendingCommand = buildJoystickCommand();
-          flushCommand();
-        }
+      state.commandTimer = window.setInterval(async () => {
+        if (!state.connected) return;
+        // Only stream joystick frames while armed; otherwise keep aliveness with a benign frame
+        await writeRaw(buildJoystickCommand());
       }, COMMAND_INTERVAL_MS);
     }
 
@@ -485,41 +575,67 @@
       const data = parseTelemetry(raw);
       state.telemetryAt = Date.now();
 
-      // Battery & ToF Sensors
-      const bat = data["BAT"];
-      if (bat) $("batteryVoltage").textContent = bat;
+      // Flight state string (ST:ARMED|DISARMED|FAILSAFE|ARMING)
+      if (data["ST"]) {
+        state.flightState = data["ST"];
+        state.armed = state.flightState === "ARMED";
+      }
 
-      const tof = numeric(data, "ToF");
-      if (tof !== null) $("tofRange").textContent = `${tof} mm`;
+      // Reject code
+      const rej = numeric(data, "REJ");
+      if (rej !== null) state.reject = rej;
 
-      // Flight Attitude
-      const roll = numeric(data, "R");
+      // Upside-down latch
+      const up = numeric(data, "UP");
+      if (up !== null) state.upsideDown = up === 1;
+
+      // Obstacle flag
+      const obs = numeric(data, "OBS");
+      if (obs !== null) state.obstacle = obs === 1;
+      $("obstacleValue").textContent = state.obstacle ? "NEAR" : "CLEAR";
+      $("obstacleValue").style.color = state.obstacle ? "var(--amber)" : "var(--green)";
+
+      // Front range
+      const front = numeric(data, "FRONT");
+      if (front !== null) {
+        state.frontMm = front;
+        $("frontRange").textContent = front > 0 ? `${front} mm` : "— mm";
+      }
+
+      // Battery
+      if (data["BAT"]) {
+        state.batV = parseFloat(data["BAT"]);
+        $("batteryVoltage").textContent = data["BAT"];
+      }
+
+      // Attitude
+      const roll  = numeric(data, "R");
       const pitch = numeric(data, "P");
       if (roll !== null && pitch !== null) {
         $("attitude").textContent = `${roll.toFixed(1)}° / ${pitch.toFixed(1)}°`;
+        const hy = Math.max(-25, Math.min(25, pitch * 1.2));
         $("horizonWorld").style.transform =
-          `translateY(${Math.max(-25, Math.min(25, pitch * 1.2))}px) rotate(${-roll}deg)`;
+          `translateY(${hy}px) rotate(${-roll}deg)`;
       }
 
-      // Throttle & Gyro
-      const throttle = numeric(data, "T");
-      if (throttle !== null) $("throttleReported").textContent = `${Math.round(throttle / 2.55)}%`;
-
+      // Gyro Z
       const gz = numeric(data, "GZ");
-      if (gz !== null) $("gyroRate").textContent = `${gz.toFixed(1)}°/s`;
+      if (gz !== null) {
+        state.lastGz = gz;
+        $("gyroRate").textContent = `${gz.toFixed(1)}°/s`;
+      }
 
-      // Motor & BEMF Telemetry arrays
-      if (data["PWM"]) $("pwmValue").textContent = data["PWM"];
+      // PWM / BEMF arrays (already wrapped in brackets from firmware)
+      if (data["PWM"])  $("pwmValue").textContent  = data["PWM"];
       if (data["BEMF"]) $("bemfValue").textContent = data["BEMF"];
-      if (data["RPM"]) $("rpmValue").textContent = data["RPM"];
 
-      // Status Flags
-      const imu = numeric(data, "IMU");
-      const cal = numeric(data, "CAL");
-      const arm = numeric(data, "ARM");
-      if (imu !== null) { state.imuReady = imu === 1; $("imuValue").textContent = state.imuReady ? "OK" : "ERR"; }
-      if (cal !== null) { state.calReady = cal === 1; $("calValue").textContent = state.calReady ? "OK" : "NO"; }
-      if (arm !== null) state.armed = arm === 1;
+      // Upside field on lower grid
+      $("upsideValue").textContent = state.upsideDown ? "YES" : "NO";
+      $("upsideValue").style.color = state.upsideDown ? "var(--red)" : "var(--green)";
+
+      $("rejectValue").textContent = REJECT_MAP[state.reject] || String(state.reject);
+      $("rejectValue").style.color =
+        state.reject === 0 ? "var(--green)" : "var(--amber)";
 
       updateButtons();
     }
@@ -533,7 +649,7 @@
 
     function updateStickUI() {
       $("stickKnob").style.left = `${50 + state.roll * 0.32}%`;
-      $("stickKnob").style.top = `${50 - state.pitch * 0.32}%`;
+      $("stickKnob").style.top  = `${50 - state.pitch * 0.32}%`;
       $("rightReadout").textContent = `R:${Math.round(state.roll)} · P:${Math.round(state.pitch)}`;
     }
 
@@ -543,110 +659,12 @@
         const rect = stick.getBoundingClientRect();
         const radius = Math.min(rect.width, rect.height) * 0.37;
         let dx = event.clientX - (rect.left + rect.width / 2);
-        let dy = event.clientY - (rect.top + rect.height / 2);
+        let dy = event.clientY - (rect.top  + rect.height / 2);
         const distance = Math.hypot(dx, dy);
         if (distance > radius) { dx *= radius / distance; dy *= radius / distance; }
-        state.roll = applyDeadzone(dx / radius);
+        state.roll  = applyDeadzone(dx / radius);
         state.pitch = applyDeadzone(-dy / radius);
         updateStickUI();
       }
       stick.addEventListener("pointerdown", event => {
-        if (state.pointerStick !== null) return;
-        state.pointerStick = event.pointerId;
-        stick.setPointerCapture(event.pointerId);
-        move(event);
-      });
-      stick.addEventListener("pointermove", event => {
-        if (event.pointerId === state.pointerStick) move(event);
-      });
-      function release(event) {
-        if (event.pointerId !== state.pointerStick) return;
-        state.pointerStick = null;
-        state.roll = 0; state.pitch = 0;
-        updateStickUI();
-      }
-      stick.addEventListener("pointerup", release);
-      stick.addEventListener("pointercancel", release);
-      stick.addEventListener("lostpointercapture", release);
-    }
-
-    function updateThrottleUI() {
-      const track = $("throttleTrack");
-      const knob = $("throttleKnob");
-      const trackH = track.clientHeight;
-      const knobH = knob.offsetHeight || 28;
-      const range = Math.max(0, trackH - knobH - 4);
-      const y = (1 - state.throttle / 100) * range;
-      knob.style.top = `${y}px`;
-      $("throttleReadout").textContent = `${Math.round(state.throttle)}%`;
-      updateButtons();
-    }
-
-    function initThrottle() {
-      const track = $("throttleTrack");
-      function move(event) {
-        const rect = track.getBoundingClientRect();
-        const knobHalf = ($("throttleKnob").offsetHeight || 28) / 2;
-        const usable = Math.max(1, rect.height - knobHalf * 2);
-        const ratio = 1 - Math.max(0, Math.min(1, (event.clientY - rect.top - knobHalf) / usable));
-        state.throttle = Math.round(ratio * 100);
-        updateThrottleUI();
-      }
-      track.addEventListener("pointerdown", event => {
-        if (state.pointerThrottle !== null) return;
-        state.pointerThrottle = event.pointerId;
-        track.setPointerCapture(event.pointerId);
-        move(event);
-      });
-      track.addEventListener("pointermove", event => {
-        if (event.pointerId === state.pointerThrottle) move(event);
-      });
-      function release(event) {
-        if (event.pointerId !== state.pointerThrottle) return;
-        state.pointerThrottle = null;
-        if (!$("holdThrottle").checked) state.throttle = 0;
-        updateThrottleUI();
-      }
-      track.addEventListener("pointerup", release);
-      track.addEventListener("pointercancel", release);
-      track.addEventListener("lostpointercapture", release);
-      $("holdThrottle").addEventListener("change", () => {
-        if (!$("holdThrottle").checked) { state.throttle = 0; updateThrottleUI(); }
-      });
-    }
-
-    $("connectBtn").addEventListener("click", connectBLE);
-    $("disconnectBtn").addEventListener("click", disconnectBLE);
-    $("armBtn").addEventListener("click", async () => {
-      state.pendingArm = true;
-      updateButtons();
-      if (await sendImmediate("ARM")) {
-        log("ARM command sent.");
-      }
-      setTimeout(() => {
-        state.pendingArm = false;
-        updateButtons();
-      }, 800);
-    });
-    $("disarmBtn").addEventListener("click", async () => {
-      if (await sendImmediate("DISARM")) log("DISARM command sent.");
-    });
-    $("stopBtn").addEventListener("click", async () => {
-      state.throttle = 0; state.roll = 0; state.pitch = 0; state.yaw = 0;
-      updateThrottleUI(); updateStickUI();
-      if (await sendImmediate("STOP")) log("STOP sent.");
-    });
-
-    window.addEventListener("resize", () => {
-      updateThrottleUI();
-      updateStickUI();
-    });
-
-    initStick();
-    initThrottle();
-    updateStickUI();
-    updateThrottleUI();
-    updateButtons();
-  </script>
-</body>
-</html>
+        if (state.pointerStick !== null) return
