@@ -4,15 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#07111f">
-  <meta name="description" content="AVION Controller — ESP32-S3 brushed quadcopter flight deck">
   <title>AVION Controller — Flight Deck</title>
   <style>
     :root {
       color-scheme: dark;
       --bg: #07111f;
-      --bg-grid: rgba(148,163,184,.035);
-      --panel: rgba(15, 27, 45, .95);
-      --panel-2: rgba(9, 18, 32, .95);
+      --grid: rgba(148,163,184,.035);
+      --panel: rgba(15,27,45,.95);
       --border: rgba(148,163,184,.16);
       --border-strong: rgba(148,163,184,.28);
       --cyan: #38d5ee;
@@ -28,50 +26,38 @@
       --muted-2: #647991;
       --radius: 8px;
       --shadow: 0 4px 20px rgba(0,0,0,.3);
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
-      --safe-top: env(safe-area-inset-top, 0px);
-      --safe-left: env(safe-area-inset-left, 0px);
-      --safe-right: env(safe-area-inset-right, 0px);
+      --st: env(safe-area-inset-top, 0px);
+      --sb: env(safe-area-inset-bottom, 0px);
+      --sl: env(safe-area-inset-left, 0px);
+      --sr: env(safe-area-inset-right, 0px);
     }
-    * {
-      box-sizing: border-box;
-      user-select: none;
-      -webkit-user-select: none;
-      touch-action: none;
-      -webkit-touch-callout: none;
-    }
+    * { box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
     html, body {
       width: 100vw; height: 100vh; height: 100dvh;
-      margin: 0; padding: 0;
-      overflow: hidden; position: fixed;
+      margin: 0; padding: 0; overflow: hidden; position: fixed;
       color: var(--text);
       background:
         radial-gradient(ellipse at 15% 0%, rgba(8,145,178,.13), transparent 38rem),
         radial-gradient(ellipse at 100% 90%, rgba(30,64,175,.12), transparent 36rem),
-        linear-gradient(var(--bg-grid) 1px, transparent 1px),
-        linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px),
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px),
         var(--bg);
       background-size: auto, auto, 20px 20px, 20px 20px, auto;
-      font: 11px/1.2 Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+      font: 11px/1.2 ui-sans-serif, system-ui, -apple-system, Inter, sans-serif;
       -webkit-font-smoothing: antialiased;
     }
-    button, input { font: inherit; }
-    button { -webkit-tap-highlight-color: transparent; }
+    button { font: inherit; -webkit-tap-highlight-color: transparent; }
 
     .app {
       width: 100%; height: 100%;
-      padding:
-        max(4px, var(--safe-top))
-        max(6px, var(--safe-right))
-        max(4px, var(--safe-bottom))
-        max(6px, var(--safe-left));
+      padding: max(4px, var(--st)) max(6px, var(--sr)) max(4px, var(--sb)) max(6px, var(--sl));
       display: grid;
       grid-template-rows: auto auto 1fr auto;
       gap: 4px;
       overflow: hidden;
     }
 
-    /* ===== TOP BAR ===== */
+    /* TOP BAR */
     .topbar {
       display: flex; align-items: center; justify-content: space-between; gap: 6px;
       padding: 3px 8px; border: 1px solid var(--border); border-radius: var(--radius);
@@ -84,9 +70,9 @@
       border-radius: 6px; color: var(--cyan); background: var(--cyan-soft);
       border: 1px solid rgba(56,213,238,.28); font-size: 11px; font-weight: 900;
     }
-    .brand-title { margin:0; font-size: 10px; font-weight: 900; letter-spacing:.08em; color: var(--cyan); line-height: 1.1; }
+    .brand-title { margin:0; font-size:10px; font-weight:900; letter-spacing:.08em; color: var(--cyan); line-height:1.1; }
     .brand-sub { color:var(--muted); font-size:7px; letter-spacing:.06em; text-transform:uppercase; }
-    .status-group { display:flex; gap:3px; align-items:center; flex-wrap: nowrap; }
+    .status-group { display:flex; gap:3px; align-items:center; flex-wrap:nowrap; }
 
     .pill {
       display:inline-flex; align-items:center; gap:3px; padding:2px 5px;
@@ -96,41 +82,39 @@
     }
     .dot { width:5px; height:5px; border-radius:50%; background:currentColor; box-shadow:0 0 6px currentColor; }
     .pill.good { color:var(--green); border-color:rgba(54,211,153,.28); background:var(--green-soft); }
-    .pill.bad { color:var(--red); border-color:rgba(251,113,133,.3); background:var(--red-soft); }
-    .pill.warn { color:var(--amber); border-color:rgba(251,191,36,.28); background:var(--amber-soft); }
+    .pill.bad  { color:var(--red);   border-color:rgba(251,113,133,.3);  background:var(--red-soft); }
+    .pill.warn { color:var(--amber); border-color:rgba(251,191,36,.28);  background:var(--amber-soft); }
 
-    /* ===== TOP METRICS ===== */
-    .metrics {
-      display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:3px;
-    }
+    /* TOP METRICS */
+    .metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:3px; }
     .metric, .panel {
       border:1px solid var(--border); border-radius:var(--radius);
       background:var(--panel); box-shadow:var(--shadow); min-width:0;
     }
-    .metric { padding:2px 4px; text-align: center; }
+    .metric { padding:2px 4px; text-align:center; }
     .metric-label {
-      color:var(--muted); font-size:6.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      color:var(--muted); font-size:6.5px; font-weight:800; letter-spacing:.08em;
+      text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
     .metric-value {
       margin-top:1px; color:var(--cyan); font:700 10px ui-monospace,monospace;
-      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
     }
 
-    /* ===== WORKSPACE (3 columns) ===== */
+    /* WORKSPACE — 3 cols */
     .workspace {
-      display:grid;
-      grid-template-columns: 78px 1fr 112px;
-      gap:4px;
-      min-height: 0;
-      overflow: hidden;
+      display:grid; grid-template-columns: 78px 1fr 112px;
+      gap:4px; min-height:0; overflow:hidden;
     }
-    .panel { padding:4px; display:flex; flex-direction:column; justify-content:space-between; align-items:center; min-height:0; overflow:hidden; }
+    .panel {
+      padding:4px; display:flex; flex-direction:column; justify-content:space-between;
+      align-items:center; min-height:0; overflow:hidden;
+    }
     .panel-head { display:flex; align-items:center; justify-content:space-between; gap:3px; width:100%; flex-shrink:0; }
     .panel-title { margin:0; font-size:8px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
 
-    /* ===== THROTTLE ===== */
-    .throttle-panel { align-items: center; }
+    /* THROTTLE */
+    .throttle-panel { align-items:center; }
     .throttle-control {
       width:100%; flex:1; display:flex; flex-direction:column; align-items:center;
       gap:3px; padding:1px 0; min-height:0;
@@ -139,8 +123,8 @@
       position:relative; width:32px; flex:1; min-height:60px;
       border:2px solid var(--border-strong); border-radius:16px;
       background:linear-gradient(180deg,rgba(2,8,23,.9),rgba(15,30,49,.95));
-      box-shadow:inset 0 0 12px rgba(0,0,0,.45); cursor:ns-resize;
-      touch-action: none;
+      box-shadow:inset 0 0 12px rgba(0,0,0,.45);
+      cursor:ns-resize; touch-action:none;
     }
     .throttle-track::before {
       content:""; position:absolute; top:6px; bottom:6px; left:50%; width:2px;
@@ -149,15 +133,21 @@
     .throttle-knob {
       position:absolute; left:50%; bottom:0; transform:translateX(-50%);
       width:22px; height:22px; border-radius:50%; border:2px solid #b8f5ff;
-      background:linear-gradient(145deg,#40e0f3,#087eaa); box-shadow:0 0 10px rgba(56,213,238,.38);
+      background:linear-gradient(145deg,#40e0f3,#087eaa);
+      box-shadow:0 0 10px rgba(56,213,238,.38);
       pointer-events:none;
+      will-change: bottom;
     }
-    .range-labels { position:absolute; left:calc(100% + 3px); top:3px; bottom:3px; display:flex; flex-direction:column; justify-content:space-between; color:var(--muted-2); font-size:6px; }
+    .range-labels {
+      position:absolute; left:calc(100% + 3px); top:3px; bottom:3px;
+      display:flex; flex-direction:column; justify-content:space-between;
+      color:var(--muted-2); font-size:6px; pointer-events:none;
+    }
     .control-value { color:var(--cyan); font:700 9px ui-monospace,monospace; text-align:center; }
     .hold-row { display:flex; align-items:center; gap:3px; color:var(--muted); font-size:7px; cursor:pointer; }
     .hold-row input { accent-color:var(--cyan); width:9px; height:9px; }
 
-    /* ===== CENTER PANEL ===== */
+    /* CENTER */
     .center-panel { display:flex; flex-direction:column; align-items:center; justify-content:space-between; gap:3px; }
     .button-row { display:flex; gap:3px; width:100%; justify-content:center; flex-shrink:0; }
     .btn {
@@ -168,14 +158,14 @@
     .btn:active:not(:disabled) { transform:scale(.95); }
     .btn:disabled { opacity:.35; cursor:not-allowed; }
     .btn-primary { background:#087e9b; border-color:#16a6c4; color:#fff; }
-    .btn-safe { background:#075b49; border-color:#0d9a75; color:#a7f3d0; }
-    .btn-danger { background:#7f1d32; border-color:#be3451; color:#fecdd3; }
+    .btn-safe    { background:#075b49; border-color:#0d9a75; color:#a7f3d0; }
+    .btn-danger  { background:#7f1d32; border-color:#be3451; color:#fecdd3; }
 
     .horizon-wrap { display:flex; flex-direction:column; align-items:center; gap:2px; flex:1; justify-content:center; min-height:0; }
     .horizon {
       width:min(13vh, 68px); aspect-ratio:1; position:relative; overflow:hidden;
       border:2px solid #53677e; border-radius:50%; background:#07101e;
-      box-shadow:inset 0 0 10px rgba(0,0,0,.55);
+      box-shadow:inset 0 0 10px rgba(0,0,0,.55); flex:0 0 auto;
     }
     .horizon-world {
       position:absolute; width:180%; height:180%; left:-40%; top:-40%;
@@ -185,26 +175,30 @@
     }
     .horizon-world::after { content:""; position:absolute; top:50%; left:0; width:100%; height:2px; background:#22d3ee; }
     .horizon-mark { position:absolute; inset:0; display:grid; place-items:center; pointer-events:none; }
-    .horizon-mark span { width:18px; height:4px; border-left:2px solid #36d399; border-right:2px solid #36d399; position:relative; }
+    .horizon-mark span { width:18px; height:4px; border-left:2px solid #36d399; border-right:2px solid #36d399; }
     .horizon-caption { color:var(--muted); font-size:6.5px; letter-spacing:.08em; text-transform:uppercase; }
 
-    /* ===== JOYSTICK ===== */
-    .stick-panel { align-items: center; }
+    /* STICK */
+    .stick-panel { align-items:center; }
     .stick-wrap { display:flex; flex:1; align-items:center; justify-content:center; width:100%; min-height:0; }
     .stick {
-      width:min(100%, 86px); aspect-ratio:1; max-height: 100%; position:relative;
+      width:min(100%, 86px); aspect-ratio:1; max-height:100%; position:relative;
       border:2px solid var(--border-strong);
       border-radius:50%; background:radial-gradient(circle,#14243a 0,#07101e 72%);
-      box-shadow:inset 0 0 10px rgba(0,0,0,.6); cursor:crosshair;
-      touch-action: none;
+      box-shadow:inset 0 0 10px rgba(0,0,0,.6);
+      cursor:crosshair; touch-action:none;
+      flex:0 0 auto;
     }
     .stick::before { content:""; position:absolute; inset:20%; border:1px dashed rgba(148,163,184,.25); border-radius:50%; }
-    .stick::after { content:""; position:absolute; top:50%; left:10%; right:10%; height:1px; background:rgba(148,163,184,.2); }
+    .stick::after  { content:""; position:absolute; top:50%; left:10%; right:10%; height:1px; background:rgba(148,163,184,.2); }
     .stick-axis { position:absolute; left:50%; top:10%; bottom:10%; width:1px; background:rgba(148,163,184,.2); }
     .stick-knob {
-      position:absolute; left:50%; top:50%; width:32%; aspect-ratio:1; transform:translate(-50%,-50%);
-      border-radius:50%; border:2px solid #b8f5ff; background:linear-gradient(145deg,#40e0f3,#087eaa);
+      position:absolute; left:50%; top:50%; width:32%; aspect-ratio:1;
+      transform:translate(-50%,-50%);
+      border-radius:50%; border:2px solid #b8f5ff;
+      background:linear-gradient(145deg,#40e0f3,#087eaa);
       box-shadow:0 0 10px rgba(56,213,238,.35); pointer-events:none;
+      will-change: left, top;
     }
     .readout {
       width:100%; text-align:center; border:1px solid var(--border); border-radius:4px;
@@ -212,14 +206,8 @@
       font:700 7.5px ui-monospace,monospace; flex-shrink:0;
     }
 
-    /* ===== LOWER TELEMETRY ===== */
-    .lower-section {
-      display:grid;
-      grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr auto;
-      gap:3px;
-      align-items: stretch;
-      min-height: 0;
-    }
+    /* LOWER */
+    .lower-section { display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr; gap:3px; min-height:0; }
     .telemetry-item {
       padding:2px 3px; border-radius:4px; background:rgba(2,8,23,.35);
       border:1px solid var(--border); text-align:center; min-width:0;
@@ -230,36 +218,34 @@
       height: 22px; overflow-y:auto; padding:2px 4px; border-radius:4px;
       border:1px solid var(--border); background:#050d18; color:#a8bbcf;
       font:7.5px/1.15 ui-monospace,monospace; white-space:pre-wrap;
-      flex-shrink: 0;
     }
 
-    /* ===== LANDSCAPE STRICT ===== */
+    /* landscape strict */
     @media (max-height: 380px) {
-      .app { padding: 2px 4px; gap: 2px; }
-      .topbar { padding: 2px 6px; min-height: 24px; }
-      .brand-mark { width: 18px; height: 18px; font-size: 10px; }
-      .brand-title { font-size: 9px; }
-      .brand-sub { font-size: 6px; }
-      .pill { font-size: 7px; padding: 1px 4px; }
-      .metric-label { font-size: 6px; }
-      .metric-value { font-size: 9px; }
+      .app { padding:2px 4px; gap:2px; }
+      .topbar { padding:2px 6px; }
+      .brand-mark { width:18px; height:18px; font-size:10px; }
+      .brand-title { font-size:9px; }
+      .brand-sub { font-size:6px; }
+      .pill { font-size:7px; padding:1px 4px; }
+      .metric-label { font-size:6px; }
+      .metric-value { font-size:9px; }
       .workspace { grid-template-columns: 68px 1fr 100px; }
-      .panel-title { font-size: 7px; }
-      .btn { min-height: 18px; font-size: 7px; padding: 1px 4px; }
-      .horizon { width: min(12vh, 56px); }
-      .stick { width: min(100%, 74px); }
-      .telemetry-item .metric-value { font-size: 7.5px; }
-      .log { height: 18px; font-size: 7px; }
+      .panel-title { font-size:7px; }
+      .btn { min-height:18px; font-size:7px; padding:1px 4px; }
+      .horizon { width:min(12vh, 56px); }
+      .stick { width:min(100%, 74px); }
+      .telemetry-item .metric-value { font-size:7.5px; }
+      .log { height:18px; font-size:7px; }
     }
     @media (max-height: 320px) {
-      .horizon { width: 48px; }
-      .stick { width: 64px; }
+      .horizon { width:48px; }
+      .stick { width:64px; }
     }
   </style>
 </head>
 <body>
   <main class="app">
-    <!-- TOP BAR -->
     <header class="topbar">
       <div class="brand">
         <div class="brand-mark" aria-hidden="true">A</div>
@@ -276,7 +262,6 @@
       </div>
     </header>
 
-    <!-- TOP METRICS -->
     <section class="metrics">
       <article class="metric">
         <div class="metric-label">Battery</div>
@@ -296,13 +281,9 @@
       </article>
     </section>
 
-    <!-- WORKSPACE -->
     <section class="workspace">
-      <!-- THROTTLE -->
       <section class="panel throttle-panel">
-        <div class="panel-head">
-          <h2 class="panel-title">Throttle</h2>
-        </div>
+        <div class="panel-head"><h2 class="panel-title">Throttle</h2></div>
         <div class="throttle-control">
           <div class="throttle-track" id="throttleTrack">
             <div class="throttle-knob" id="throttleKnob"></div>
@@ -317,7 +298,6 @@
         </div>
       </section>
 
-      <!-- CENTER -->
       <section class="panel center-panel">
         <div class="button-row">
           <button class="btn btn-primary" id="connectBtn">Connect BLE</button>
@@ -333,17 +313,14 @@
         </div>
 
         <div class="button-row">
-          <button class="btn btn-safe" id="armBtn" disabled>Arm</button>
-          <button class="btn" id="disarmBtn" disabled>Disarm</button>
-          <button class="btn btn-danger" id="stopBtn" disabled>STOP</button>
+          <button class="btn btn-safe"   id="armBtn"    disabled>Arm</button>
+          <button class="btn"            id="disarmBtn" disabled>Disarm</button>
+          <button class="btn btn-danger" id="stopBtn"   disabled>STOP</button>
         </div>
       </section>
 
-      <!-- STICK -->
       <section class="panel stick-panel">
-        <div class="panel-head">
-          <h2 class="panel-title">Roll / Pitch</h2>
-        </div>
+        <div class="panel-head"><h2 class="panel-title">Roll / Pitch</h2></div>
         <div class="stick-wrap">
           <div class="stick" id="rightStick">
             <div class="stick-axis"></div>
@@ -354,7 +331,6 @@
       </section>
     </section>
 
-    <!-- LOWER TELEMETRY -->
     <section class="lower-section">
       <div class="telemetry-item"><div class="metric-label">PWM</div><div class="metric-value" id="pwmValue">—</div></div>
       <div class="telemetry-item"><div class="metric-label">BEMF</div><div class="metric-value" id="bemfValue">—</div></div>
@@ -367,304 +343,299 @@
   </main>
 
   <script>
-    "use strict";
+  "use strict";
 
-    const SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
-    const RX_UUID      = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
-    const TX_UUID      = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
-    const DEVICE_NAME  = "ESP32S3_Brushed_FC";
-    const COMMAND_INTERVAL_MS = 50;
-    const TELEMETRY_STALE_MS  = 1200;
+  const SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+  const RX_UUID      = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
+  const TX_UUID      = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
+  const DEVICE_NAME  = "ESP32S3_Brushed_FC";
+  const COMMAND_MS   = 50;    // 20 Hz joystick frames (well under 500 ms firmware timeout)
+  const STALE_MS     = 1500;  // if no telemetry for this long, mark link as stale
 
-    const REJECT_MAP = {
-      0: "OK",
-      1: "NO IMU",
-      2: "NOT CAL",
-      3: "NO BLE",
-      4: "THR HI",
-      5: "NOT LVL",
-      6: "UPSIDE"
-    };
+  const REJECT_MAP = {
+    0: "OK", 1: "NO IMU", 2: "NOT CAL", 3: "NO BLE",
+    4: "THR HI", 5: "NOT LVL", 6: "UPSIDE"
+  };
 
-    const $ = (id) => document.getElementById(id);
-    const state = {
-      device: null, server: null, rx: null, tx: null,
-      connected: false,
-      // telemetry-derived
-      armed: false,
-      flightState: "DISARMED",
-      reject: 0,
-      upsideDown: false,
-      obstacle: false,
-      imuReady: false,
-      calReady: false,
-      batV: 0,
-      frontMm: 0,
-      // inputs
-      roll: 0, pitch: 0, yaw: 0, throttle: 0,
-      // runtime
-      telemetryAt: 0,
-      writeBusy: false,
-      commandTimer: null,
-      pointerThrottle: null,
-      pointerStick: null,
-      pendingArm: false,
-      lastPwm: "—",
-      lastBemf: "—",
-      lastGz: null
-    };
+  const $ = id => document.getElementById(id);
 
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
+  const S = {
+    device: null, server: null, rx: null, tx: null,
+    connected: false,
+    // telemetry
+    flightState: "DISARMED",
+    reject: 0,
+    upsideDown: false,
+    obstacle: false,
+    imuReady: false,
+    calReady: false,
+    batV: 0,
+    frontMm: 0,
+    lastTelemetryAt: 0,
+    // inputs
+    roll: 0, pitch: 0, yaw: 0, throttle: 0,
+    // runtime
+    writeBusy: false,
+    timer: null,
+    ptrThrottle: null,
+    ptrStick: null,
+    pendingArm: false
+  };
 
-    function log(message) {
-      $("log").textContent = `[${new Date().toLocaleTimeString().slice(0,8)}] ${message}`;
-    }
+  const enc = new TextEncoder();
+  const dec = new TextDecoder();
 
-    function setPill(id, text, kind = "") {
-      const el = $(id);
-      el.className = `pill ${kind}`.trim();
-      el.replaceChildren();
-      const dot = document.createElement("i");
-      dot.className = "dot";
-      el.append(dot, document.createTextNode(` ${text}`));
-    }
+  function log(msg) {
+    $("log").textContent = `[${new Date().toLocaleTimeString().slice(0,8)}] ${msg}`;
+  }
 
-    function updateButtons() {
-      const usable = state.connected && state.imuReady && state.calReady;
-      $("connectBtn").disabled   = state.connected;
-      $("disconnectBtn").disabled = !state.connected;
-      $("armBtn").disabled =
-        !usable ||
-        state.flightState === "ARMED" ||
-        state.throttle > 0 ||
-        state.pendingArm ||
-        state.upsideDown;
-      $("disarmBtn").disabled = !state.connected || state.flightState !== "ARMED";
-      $("stopBtn").disabled   = !state.connected;
+  function setPill(id, text, kind) {
+    const el = $(id);
+    el.className = `pill ${kind || ""}`.trim();
+    el.replaceChildren();
+    const d = document.createElement("i");
+    d.className = "dot";
+    el.append(d, document.createTextNode(" " + text));
+  }
 
-      setPill("connection", state.connected ? "CONN" : "DISC", state.connected ? "good" : "bad");
+  // ---------- UI state ----------
+  function refreshUI() {
+    const usable = S.connected && S.imuReady && S.calReady;
+    const teleFresh = S.connected && (Date.now() - S.lastTelemetryAt) < STALE_MS;
 
-      let armText = "DISARMED", armKind = "";
-      if (state.flightState === "ARMED") { armText = "ARMED"; armKind = "bad"; }
-      else if (state.flightState === "FAILSAFE") { armText = "FAILSAFE"; armKind = "bad"; }
-      else if (state.flightState === "ARMING") { armText = "ARMING"; armKind = "warn"; }
-      setPill("armStatus", armText, armKind);
+    $("connectBtn").disabled    = S.connected;
+    $("disconnectBtn").disabled = !S.connected;
+    $("armBtn").disabled =
+      !usable || !teleFresh ||
+      S.flightState === "ARMED" ||
+      S.throttle > 0 ||
+      S.pendingArm ||
+      S.upsideDown;
+    $("disarmBtn").disabled = !S.connected || S.flightState !== "ARMED";
+    $("stopBtn").disabled   = !S.connected;
 
-      const imuOK = state.imuReady && state.calReady;
-      setPill("imuStatus", imuOK ? "IMU OK" : "IMU FAULT", imuOK ? "good" : "warn");
+    setPill("connection", S.connected ? "CONN" : "DISC", S.connected ? "good" : "bad");
 
-      // Fault pill: shows upside-down / obstacle / reject
-      let faultText = "OK", faultKind = "good";
-      if (state.upsideDown) { faultText = "UPSIDE DOWN"; faultKind = "bad"; }
-      else if (state.reject !== 0) { faultText = REJECT_MAP[state.reject] || "REJECT"; faultKind = "warn"; }
-      else if (state.obstacle) { faultText = "OBSTACLE"; faultKind = "warn"; }
-      setPill("faultStatus", faultText, faultKind);
+    let armText = "DISARMED", armKind = "";
+    if (S.flightState === "ARMED")         { armText = "ARMED";    armKind = "bad"; }
+    else if (S.flightState === "FAILSAFE") { armText = "FAILSAFE"; armKind = "bad"; }
+    else if (S.flightState === "ARMING")   { armText = "ARMING";   armKind = "warn"; }
+    setPill("armStatus", armText, armKind);
 
-      $("stateValue").textContent = state.flightState;
-      $("stateValue").style.color =
-        state.flightState === "ARMED"    ? "var(--red)" :
-        state.flightState === "FAILSAFE" ? "var(--red)" :
-        state.flightState === "ARMING"   ? "var(--amber)" : "var(--cyan)";
-    }
+    const imuOK = S.imuReady && S.calReady;
+    setPill("imuStatus", imuOK ? "IMU OK" : "IMU FAULT", imuOK ? "good" : "warn");
 
-    function resetControls() {
-      state.roll = 0; state.pitch = 0; state.yaw = 0;
-      updateStickUI();
+    let faultText = "OK", faultKind = "good";
+    if (S.upsideDown)      { faultText = "UPSIDE DOWN"; faultKind = "bad"; }
+    else if (S.reject !== 0) { faultText = REJECT_MAP[S.reject] || "REJECT"; faultKind = "warn"; }
+    else if (S.obstacle)   { faultText = "OBSTACLE";    faultKind = "warn"; }
+    setPill("faultStatus", faultText, faultKind);
+
+    $("stateValue").textContent = S.flightState;
+    $("stateValue").style.color =
+      S.flightState === "ARMED"    ? "var(--red)"  :
+      S.flightState === "FAILSAFE" ? "var(--red)"  :
+      S.flightState === "ARMING"   ? "var(--amber)": "var(--cyan)";
+
+    updateStickUI();
+    updateThrottleUI();
+  }
+
+  function resetInputs() {
+    S.roll = 0; S.pitch = 0; S.yaw = 0;
+    updateStickUI();
+  }
+
+  // ---------- Throttle ----------
+  function updateThrottleUI() {
+    const track = $("throttleTrack");
+    const knob  = $("throttleKnob");
+    const trackH = track.clientHeight;
+    const knobH  = knob.clientHeight || 22;
+    const usable = Math.max(1, trackH - knobH - 4);
+    // 0% -> bottom (bottom:0), 100% -> top
+    knob.style.bottom = `${(S.throttle / 100) * usable}px`;
+    $("throttleReadout").textContent = `${Math.round(S.throttle)}%`;
+  }
+
+  function initThrottle() {
+    const track = $("throttleTrack");
+    function setFromEvent(ev) {
+      const rect = track.getBoundingClientRect();
+      const knobH = $("throttleKnob").clientHeight || 22;
+      const usable = Math.max(1, rect.height - knobH - 4);
+      // top = max, bottom = min
+      const yFromTop = ev.clientY - rect.top - (knobH / 2) - 2;
+      const ratio = 1 - Math.max(0, Math.min(1, yFromTop / usable));
+      S.throttle = Math.round(ratio * 100);
       updateThrottleUI();
     }
+    track.addEventListener("pointerdown", ev => {
+      if (S.ptrThrottle !== null) return;
+      S.ptrThrottle = ev.pointerId;
+      track.setPointerCapture(ev.pointerId);
+      setFromEvent(ev);
+    });
+    track.addEventListener("pointermove", ev => {
+      if (ev.pointerId === S.ptrThrottle) setFromEvent(ev);
+    });
+    const release = ev => {
+      if (ev.pointerId !== S.ptrThrottle) return;
+      S.ptrThrottle = null;
+      if (!$("holdThrottle").checked) { S.throttle = 0; updateThrottleUI(); }
+    };
+    track.addEventListener("pointerup", release);
+    track.addEventListener("pointercancel", release);
+    track.addEventListener("lostpointercapture", release);
+    $("holdThrottle").addEventListener("change", () => {
+      if (!$("holdThrottle").checked) { S.throttle = 0; updateThrottleUI(); }
+    });
+  }
 
-    async function connectBLE() {
-      if (!("bluetooth" in navigator)) {
-        log("Web Bluetooth unavailable.");
-        return;
-      }
-      $("connectBtn").disabled = true;
-      try {
-        state.device = await navigator.bluetooth.requestDevice({
-          filters: [{ name: DEVICE_NAME }],
-          optionalServices: [SERVICE_UUID]
-        });
-        state.device.addEventListener("gattserverdisconnected", onDisconnected);
-        state.server = await state.device.gatt.connect();
-        const service = await state.server.getPrimaryService(SERVICE_UUID);
-        state.rx = await service.getCharacteristic(RX_UUID);
-        state.tx = await service.getCharacteristic(TX_UUID);
-        await state.tx.startNotifications();
-        state.tx.addEventListener("characteristicvaluechanged", onTelemetry);
-        state.connected = true;
-        updateButtons();
-        startCommandLoop();
-        log(`Connected to ${DEVICE_NAME}.`);
-      } catch (error) {
-        state.connected = false;
-        updateButtons();
-        log(`BLE Error: ${error?.message || error}`);
-      }
+  // ---------- Stick ----------
+  function applyDeadzone(v, dz = 0.10) {
+    const m = Math.abs(v);
+    if (m <= dz) return 0;
+    const n = (m - dz) / (1 - dz);
+    return Math.sign(v) * Math.round((0.7 * n + 0.3 * n * n) * 100);
+  }
+
+  function updateStickUI() {
+    $("stickKnob").style.left = `${50 + S.roll  * 0.32}%`;
+    $("stickKnob").style.top  = `${50 - S.pitch * 0.32}%`;
+    $("rightReadout").textContent = `R:${Math.round(S.roll)} · P:${Math.round(S.pitch)}`;
+  }
+
+  function initStick() {
+    const stick = $("rightStick");
+    function move(ev) {
+      const r = stick.getBoundingClientRect();
+      const radius = Math.min(r.width, r.height) * 0.37;
+      let dx = ev.clientX - (r.left + r.width / 2);
+      let dy = ev.clientY - (r.top  + r.height / 2);
+      const dist = Math.hypot(dx, dy);
+      if (dist > radius) { dx *= radius / dist; dy *= radius / dist; }
+      S.roll  = applyDeadzone(dx / radius);
+      S.pitch = applyDeadzone(-dy / radius);
+      updateStickUI();
     }
+    stick.addEventListener("pointerdown", ev => {
+      if (S.ptrStick !== null) return;
+      S.ptrStick = ev.pointerId;
+      stick.setPointerCapture(ev.pointerId);
+      move(ev);
+    });
+    stick.addEventListener("pointermove", ev => {
+      if (ev.pointerId === S.ptrStick) move(ev);
+    });
+    const release = ev => {
+      if (ev.pointerId !== S.ptrStick) return;
+      S.ptrStick = null;
+      S.roll = 0; S.pitch = 0;
+      updateStickUI();
+    };
+    stick.addEventListener("pointerup", release);
+    stick.addEventListener("pointercancel", release);
+    stick.addEventListener("lostpointercapture", release);
+  }
 
-    function onDisconnected() {
-      state.connected = false;
-      state.armed = false;
-      state.flightState = "DISARMED";
-      state.rx = null; state.tx = null;
-      stopCommandLoop();
-      resetControls();
-      updateButtons();
-      log("BLE disconnected.");
+  // ---------- BLE ----------
+  async function writeRaw(text) {
+    if (!S.connected || !S.rx) return false;
+    while (S.writeBusy) await new Promise(r => setTimeout(r, 1));
+    S.writeBusy = true;
+    try {
+      await S.rx.writeValue(enc.encode(text));
+      return true;
+    } catch (e) {
+      log(`write failed: ${e.message || e}`);
+      return false;
+    } finally {
+      S.writeBusy = false;
     }
+  }
 
-    async function disconnectBLE() {
-      try { await sendImmediate("DISARM"); } catch (_) {}
-      if (state.device?.gatt?.connected) state.device.gatt.disconnect();
-      else onDisconnected();
+  function buildCommand() {
+    return `J,${Math.round(S.roll)},${Math.round(S.pitch)},${Math.round(S.yaw)},${Math.round(S.throttle)}`;
+  }
+
+  function startLoop() {
+    stopLoop();
+    S.timer = setInterval(async () => {
+      if (!S.connected) return;
+      await writeRaw(buildCommand());
+      // refresh UI on stale detection
+      refreshUI();
+    }, COMMAND_MS);
+  }
+  function stopLoop() {
+    if (S.timer !== null) { clearInterval(S.timer); S.timer = null; }
+  }
+
+  async function connectBLE() {
+    if (!("bluetooth" in navigator)) { log("Web Bluetooth not available."); return; }
+    $("connectBtn").disabled = true;
+    try {
+      S.device = await navigator.bluetooth.requestDevice({
+        filters: [{ name: DEVICE_NAME }],
+        optionalServices: [SERVICE_UUID]
+      });
+      S.device.addEventListener("gattserverdisconnected", onDisconnected);
+      S.server = await S.device.gatt.connect();
+      const svc = await S.server.getPrimaryService(SERVICE_UUID);
+      S.rx = await svc.getCharacteristic(RX_UUID);
+      S.tx = await svc.getCharacteristic(TX_UUID);
+      await S.tx.startNotifications();
+      S.tx.addEventListener("characteristicvaluechanged", onTelemetry);
+      S.connected = true;
+      S.lastTelemetryAt = Date.now();
+      refreshUI();
+      startLoop();
+      log(`Connected to ${DEVICE_NAME}`);
+    } catch (e) {
+      S.connected = false;
+      refreshUI();
+      log(`Connect error: ${e.message || e}`);
     }
+  }
 
-    async function writeRaw(command) {
-      if (!state.connected || !state.rx) return false;
-      while (state.writeBusy) await new Promise(r => setTimeout(r, 2));
-      state.writeBusy = true;
-      try {
-        await state.rx.writeValue(encoder.encode(command));
-        return true;
-      } catch (error) {
-        return false;
-      } finally {
-        state.writeBusy = false;
-      }
+  function onDisconnected() {
+    S.connected = false;
+    S.flightState = "DISARMED";
+    S.rx = null; S.tx = null;
+    stopLoop();
+    resetInputs();
+    refreshUI();
+    log("BLE disconnected.");
+  }
+
+  async function disconnectBLE() {
+    try { await writeRaw("DISARM"); } catch (_) {}
+    if (S.device?.gatt?.connected) S.device.gatt.disconnect();
+    else onDisconnected();
+  }
+
+  // ---------- Telemetry parsing ----------
+  function parseKV(raw) {
+    const out = {};
+    // split respecting bracketed array values like PWM:[1,2,3,4]
+    let depth = 0, start = 0;
+    const parts = [];
+    for (let i = 0; i < raw.length; i++) {
+      const c = raw[i];
+      if (c === "[") depth++;
+      else if (c === "]") depth--;
+      else if (c === "," && depth === 0) { parts.push(raw.slice(start, i)); start = i + 1; }
     }
-
-    function sendImmediate(command) { return writeRaw(command); }
-
-    function buildJoystickCommand() {
-      return `J,${Math.round(state.roll)},${Math.round(state.pitch)},${Math.round(state.yaw)},${Math.round(state.throttle)}`;
+    parts.push(raw.slice(start));
+    for (const p of parts) {
+      const c = p.indexOf(":");
+      if (c > 0) out[p.slice(0, c).trim()] = p.slice(c + 1).trim();
     }
+    return out;
+  }
 
-    function startCommandLoop() {
-      stopCommandLoop();
-      state.commandTimer = window.setInterval(async () => {
-        if (!state.connected) return;
-        // Only stream joystick frames while armed; otherwise keep aliveness with a benign frame
-        await writeRaw(buildJoystickCommand());
-      }, COMMAND_INTERVAL_MS);
-    }
-
-    function stopCommandLoop() {
-      if (state.commandTimer !== null) clearInterval(state.commandTimer);
-      state.commandTimer = null;
-    }
-
-    function parseTelemetry(raw) {
-      const data = {};
-      for (const part of raw.split(",")) {
-        const colon = part.indexOf(":");
-        if (colon > 0) data[part.slice(0, colon).trim()] = part.slice(colon + 1).trim();
-      }
-      return data;
-    }
-
-    function numeric(data, key) {
-      if (!(key in data)) return null;
-      const n = Number(data[key]);
-      return Number.isFinite(n) ? n : null;
-    }
-
-    function onTelemetry(event) {
-      const raw = decoder.decode(event.target.value).replace(/\0/g, "").trim();
-      if (!raw) return;
-      const data = parseTelemetry(raw);
-      state.telemetryAt = Date.now();
-
-      // Flight state string (ST:ARMED|DISARMED|FAILSAFE|ARMING)
-      if (data["ST"]) {
-        state.flightState = data["ST"];
-        state.armed = state.flightState === "ARMED";
-      }
-
-      // Reject code
-      const rej = numeric(data, "REJ");
-      if (rej !== null) state.reject = rej;
-
-      // Upside-down latch
-      const up = numeric(data, "UP");
-      if (up !== null) state.upsideDown = up === 1;
-
-      // Obstacle flag
-      const obs = numeric(data, "OBS");
-      if (obs !== null) state.obstacle = obs === 1;
-      $("obstacleValue").textContent = state.obstacle ? "NEAR" : "CLEAR";
-      $("obstacleValue").style.color = state.obstacle ? "var(--amber)" : "var(--green)";
-
-      // Front range
-      const front = numeric(data, "FRONT");
-      if (front !== null) {
-        state.frontMm = front;
-        $("frontRange").textContent = front > 0 ? `${front} mm` : "— mm";
-      }
-
-      // Battery
-      if (data["BAT"]) {
-        state.batV = parseFloat(data["BAT"]);
-        $("batteryVoltage").textContent = data["BAT"];
-      }
-
-      // Attitude
-      const roll  = numeric(data, "R");
-      const pitch = numeric(data, "P");
-      if (roll !== null && pitch !== null) {
-        $("attitude").textContent = `${roll.toFixed(1)}° / ${pitch.toFixed(1)}°`;
-        const hy = Math.max(-25, Math.min(25, pitch * 1.2));
-        $("horizonWorld").style.transform =
-          `translateY(${hy}px) rotate(${-roll}deg)`;
-      }
-
-      // Gyro Z
-      const gz = numeric(data, "GZ");
-      if (gz !== null) {
-        state.lastGz = gz;
-        $("gyroRate").textContent = `${gz.toFixed(1)}°/s`;
-      }
-
-      // PWM / BEMF arrays (already wrapped in brackets from firmware)
-      if (data["PWM"])  $("pwmValue").textContent  = data["PWM"];
-      if (data["BEMF"]) $("bemfValue").textContent = data["BEMF"];
-
-      // Upside field on lower grid
-      $("upsideValue").textContent = state.upsideDown ? "YES" : "NO";
-      $("upsideValue").style.color = state.upsideDown ? "var(--red)" : "var(--green)";
-
-      $("rejectValue").textContent = REJECT_MAP[state.reject] || String(state.reject);
-      $("rejectValue").style.color =
-        state.reject === 0 ? "var(--green)" : "var(--amber)";
-
-      updateButtons();
-    }
-
-    function applyDeadzone(value, deadzone = 0.10) {
-      const magnitude = Math.abs(value);
-      if (magnitude <= deadzone) return 0;
-      const normalized = (magnitude - deadzone) / (1 - deadzone);
-      return Math.sign(value) * Math.round((0.7 * normalized + 0.3 * normalized * normalized) * 100);
-    }
-
-    function updateStickUI() {
-      $("stickKnob").style.left = `${50 + state.roll * 0.32}%`;
-      $("stickKnob").style.top  = `${50 - state.pitch * 0.32}%`;
-      $("rightReadout").textContent = `R:${Math.round(state.roll)} · P:${Math.round(state.pitch)}`;
-    }
-
-    function initStick() {
-      const stick = $("rightStick");
-      function move(event) {
-        const rect = stick.getBoundingClientRect();
-        const radius = Math.min(rect.width, rect.height) * 0.37;
-        let dx = event.clientX - (rect.left + rect.width / 2);
-        let dy = event.clientY - (rect.top  + rect.height / 2);
-        const distance = Math.hypot(dx, dy);
-        if (distance > radius) { dx *= radius / distance; dy *= radius / distance; }
-        state.roll  = applyDeadzone(dx / radius);
-        state.pitch = applyDeadzone(-dy / radius);
-        updateStickUI();
-      }
-      stick.addEventListener("pointerdown", event => {
-        if (state.pointerStick !== null) return
+  function num(d, k) {
+    if (!(k in d)) return null;
+    const v = Number(d[k]);
+    return Number.isFinite(v
