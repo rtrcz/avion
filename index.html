@@ -1,145 +1,677 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ESP-QUAD · MPU 3D Orientation</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESP-QUAD 3D Orientation</title>
+
 <style>
-:root{color-scheme:dark;--bg:#090f1d;--panel:#131e31;--line:#2a3a55;--text:#eef5ff;--muted:#9aabc3;--blue:#62c5ff;--green:#62e0ad;--amber:#ffc477}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 0,#1a3150 0,var(--bg) 55%);color:var(--text);font:15px system-ui,Segoe UI,sans-serif}
-main{max-width:1000px;margin:auto;padding:25px 17px 45px}.head{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap}
-h1{font-size:clamp(23px,4vw,34px);margin:0}.muted{color:var(--muted)}.small{font-size:12px}
-button{border:0;border-radius:11px;background:var(--blue);color:#071522;padding:12px 17px;font-weight:800;cursor:pointer}button:disabled{opacity:.5}
-.status{border:1px solid var(--line);padding:9px 12px;border-radius:30px;color:var(--muted);font-size:13px}
-.dot{display:inline-block;width:8px;height:8px;background:#78869b;border-radius:50%;margin-right:7px}.dot.on{background:var(--green);box-shadow:0 0 10px var(--green)}
-.layout{display:grid;grid-template-columns:1.25fr .75fr;gap:15px;margin-top:20px}
-.panel{background:linear-gradient(145deg,#17243a,#111a2b);border:1px solid var(--line);border-radius:18px;padding:18px;min-width:0}
-.panel h2{font-size:14px;letter-spacing:.08em;color:#c4d5ed;margin:0 0 14px}
-.stage{height:390px;display:flex;align-items:center;justify-content:center;perspective:850px;overflow:hidden;background:radial-gradient(ellipse,#1b2c45 0,#111b2d 58%,#0e1727 100%);border-radius:14px}
-.cube-wrap{width:180px;height:180px;position:relative;transform-style:preserve-3d;transition:transform .07s linear}
-.face{position:absolute;width:180px;height:180px;border:2px solid #b5e5ff;background:#2b83b9c9;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:7px;font-size:18px;font-weight:900;letter-spacing:.06em;backface-visibility:hidden;box-shadow:inset 0 0 35px #ffffff16}
-.face span{font-size:11px;font-weight:600;color:#e0f4ff}
-.front{transform:translateZ(90px);background:#167eb6d9}.back{transform:rotateY(180deg) translateZ(90px);background:#27527bd9}
-.right{transform:rotateY(90deg) translateZ(90px);background:#258d8bd9}.left{transform:rotateY(-90deg) translateZ(90px);background:#286b9bd9}
-.top{transform:rotateX(90deg) translateZ(90px);background:#3d9b75df}.bottom{transform:rotateX(-90deg) translateZ(90px);background:#a57843df}
-.readings{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.read{background:#0c1627;border:1px solid #293951;border-radius:12px;padding:12px}.read label{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em}.read strong{font-size:23px;font-variant-numeric:tabular-nums}
-.command{font-size:clamp(21px,4vw,29px);font-weight:900;text-align:center;color:var(--green);padding:12px 0 4px;min-height:55px}
-.dirgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:10px}.dir{padding:11px;border-radius:11px;background:#0d1829;border:1px solid var(--line);text-align:center;color:var(--muted)}.dir.active{background:#12372f;border-color:#3cae83;color:#d4ffeb}
-.values{display:grid;grid-template-columns:1fr 1fr;gap:0 15px}.value{display:flex;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid #293951}.value span{color:var(--muted)}.value b{font-variant-numeric:tabular-nums}
-pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#0a1424;border-radius:10px;padding:12px;color:#b9cce5;font:12px ui-monospace,monospace;min-height:45px}
-@media(max-width:720px){.layout{grid-template-columns:1fr}.stage{height:320px}.cube-wrap{transform-origin:center}}
+:root {
+  color-scheme: dark;
+  --bg: #090f1d;
+  --panel: #131e31;
+  --line: #2a3a55;
+  --text: #eef5ff;
+  --muted: #9aabc3;
+  --blue: #62c5ff;
+  --green: #62e0ad;
+  --amber: #ffc477;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(ellipse at 50% 0, #1a3150, var(--bg) 55%);
+  color: var(--text);
+  font: 15px system-ui, sans-serif;
+}
+
+main {
+  max-width: 1000px;
+  margin: auto;
+  padding: 25px 17px 45px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+h1 {
+  font-size: clamp(23px, 4vw, 34px);
+  margin: 0;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.small {
+  font-size: 12px;
+}
+
+button {
+  border: 0;
+  border-radius: 11px;
+  background: var(--blue);
+  color: #071522;
+  padding: 12px 17px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+}
+
+.status {
+  border: 1px solid var(--line);
+  padding: 9px 12px;
+  border-radius: 30px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #78869b;
+  border-radius: 50%;
+  margin-right: 7px;
+}
+
+.dot.on {
+  background: var(--green);
+  box-shadow: 0 0 10px var(--green);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1.25fr 0.75fr;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.panel {
+  background: linear-gradient(145deg, #17243a, #111a2b);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 18px;
+  min-width: 0;
+}
+
+.panel h2 {
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  color: #c4d5ed;
+  margin: 0 0 14px;
+}
+
+.stage {
+  height: 390px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 850px;
+  overflow: hidden;
+  background: radial-gradient(ellipse, #1b2c45, #111b2d 58%, #0e1727);
+  border-radius: 14px;
+}
+
+.cube-wrap {
+  width: 180px;
+  height: 180px;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.07s linear;
+}
+
+.face {
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  border: 2px solid #b5e5ff;
+  background: #2b83b9c9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  backface-visibility: hidden;
+  box-shadow: inset 0 0 35px #ffffff16;
+}
+
+.face span {
+  font-size: 11px;
+  font-weight: 600;
+  color: #e0f4ff;
+}
+
+.front {
+  transform: translateZ(90px);
+  background: #167eb6d9;
+}
+
+.back {
+  transform: rotateY(180deg) translateZ(90px);
+  background: #27527bd9;
+}
+
+.right {
+  transform: rotateY(90deg) translateZ(90px);
+  background: #258d8bd9;
+}
+
+.left {
+  transform: rotateY(-90deg) translateZ(90px);
+  background: #286b9bd9;
+}
+
+.top {
+  transform: rotateX(90deg) translateZ(90px);
+  background: #3d9b75df;
+}
+
+.bottom {
+  transform: rotateX(-90deg) translateZ(90px);
+  background: #a57843df;
+}
+
+.readings {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.read {
+  background: #0c1627;
+  border: 1px solid #293951;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.read label {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.read strong {
+  font-size: 23px;
+  font-variant-numeric: tabular-nums;
+}
+
+.command {
+  font-size: clamp(21px, 4vw, 29px);
+  font-weight: 900;
+  text-align: center;
+  color: var(--green);
+  padding: 12px 0 4px;
+  min-height: 55px;
+}
+
+.dirgrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 9px;
+  margin-top: 10px;
+}
+
+.dir {
+  padding: 11px;
+  border-radius: 11px;
+  background: #0d1829;
+  border: 1px solid var(--line);
+  text-align: center;
+  color: var(--muted);
+}
+
+.dir.active {
+  background: #12372f;
+  border-color: #3cae83;
+  color: #d4ffeb;
+}
+
+.values {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 15px;
+}
+
+.value {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid #293951;
+}
+
+.value span {
+  color: var(--muted);
+}
+
+.value b {
+  font-variant-numeric: tabular-nums;
+}
+
+pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: #0a1424;
+  border-radius: 10px;
+  padding: 12px;
+  color: #b9cce5;
+  font: 12px monospace;
+  min-height: 45px;
+}
+
+@media(max-width:720px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .stage {
+    height: 320px;
+  }
+}
 </style>
 </head>
-<body><main>
-<header class="head">
- <div><h1>MPU6050 · 3D Orientation</h1><div class="muted">ESP-QUAD live sensor viewer</div></div>
- <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="status"><i id="dot" class="dot"></i><span id="status">Disconnected</span></span><button id="connect">Connect ESP-QUAD</button></div>
+
+<body>
+<main>
+
+<header>
+  <div>
+    <h1>MPU6050 · 3D Orientation</h1>
+    <div class="muted">ESP-QUAD live sensor viewer</div>
+  </div>
+
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <span class="status">
+      <i id="dot" class="dot"></i>
+      <span id="status">Disconnected</span>
+    </span>
+
+    <button id="connect">Connect ESP-QUAD</button>
+  </div>
 </header>
+
 <div class="layout">
- <section class="panel">
-  <h2>LIVE 3D BOARD VIEW</h2>
-  <div class="stage">
-   <div class="cube-wrap" id="cube">
-    <div class="face front">FRONT<span>NOSE</span></div>
-    <div class="face back">BACK<span>TAIL</span></div>
-    <div class="face right">RIGHT<span>RIGHT SIDE</span></div>
-    <div class="face left">LEFT<span>LEFT SIDE</span></div>
-    <div class="face top">TOP<span>MPU6050</span></div>
-    <div class="face bottom">BOTTOM<span>UNDERSIDE</span></div>
-   </div>
-  </div>
-  <div class="small muted" style="text-align:center;margin-top:10px">The box rotates with the measured roll and pitch.</div>
- </section>
- <section class="panel">
-  <h2>ORIENTATION COMMAND</h2>
-  <div id="command" class="command">CONNECT DEVICE</div>
-  <div class="dirgrid">
-   <div class="dir" id="front">↑ &nbsp; TILT FRONT</div>
-   <div class="dir" id="back">↓ &nbsp; TILT BACK</div>
-   <div class="dir" id="left">← &nbsp; TILT LEFT</div>
-   <div class="dir" id="right">→ &nbsp; TILT RIGHT</div>
-  </div>
-  <div class="small muted" style="line-height:1.5;margin-top:14px">Direction mapping assumes MPU X points forward and Y points right. If the box or commands move opposite to the real board, the sensor is mounted on a different axis orientation.</div>
- </section>
- <section class="panel">
-  <h2>FUSED ORIENTATION</h2>
-  <div class="readings">
-   <div class="read"><label>Roll</label><strong id="roll">—°</strong></div>
-   <div class="read"><label>Pitch</label><strong id="pitch">—°</strong></div>
-  </div>
- </section>
- <section class="panel">
-  <h2>ACCELEROMETER · g</h2>
-  <div class="values">
-   <div class="value"><span>X</span><b id="ax">—</b></div><div class="value"><span>Y</span><b id="ay">—</b></div><div class="value"><span>Z</span><b id="az">—</b></div><div class="value"><span>Magnitude</span><b id="amag">—</b></div>
-  </div>
- </section>
- <section class="panel">
-  <h2>GYROSCOPE · °/s</h2>
-  <div class="values">
-   <div class="value"><span>X</span><b id="gx">—</b></div><div class="value"><span>Y</span><b id="gy">—</b></div><div class="value"><span>Z</span><b id="gz">—</b></div>
-  </div>
- </section>
- <section class="panel">
-  <h2>LAST BLE DATA</h2><pre id="packet">Waiting for notification…</pre>
- </section>
+
+  <!-- 3D VIEW -->
+  <section class="panel">
+    <h2>LIVE 3D BOARD VIEW</h2>
+
+    <div class="stage">
+      <div class="cube-wrap" id="cube">
+
+        <div class="face front">
+          FRONT
+          <span>NOSE</span>
+        </div>
+
+        <div class="face back">
+          BACK
+          <span>TAIL</span>
+        </div>
+
+        <div class="face right">
+          RIGHT
+          <span>RIGHT SIDE</span>
+        </div>
+
+        <div class="face left">
+          LEFT
+          <span>LEFT SIDE</span>
+        </div>
+
+        <div class="face top">
+          TOP
+          <span>MPU6050</span>
+        </div>
+
+        <div class="face bottom">
+          BOTTOM
+          <span>UNDERSIDE</span>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="small muted" style="text-align:center;margin-top:10px">
+      The box rotates with the measured roll and pitch.
+    </div>
+  </section>
+
+
+  <!-- COMMAND -->
+  <section class="panel">
+    <h2>ORIENTATION COMMAND</h2>
+
+    <div id="command" class="command">
+      CONNECT DEVICE
+    </div>
+
+    <div class="dirgrid">
+      <div class="dir" id="front">↑ TILT FRONT</div>
+      <div class="dir" id="back">↓ TILT BACK</div>
+      <div class="dir" id="left">← TILT LEFT</div>
+      <div class="dir" id="right">→ TILT RIGHT</div>
+    </div>
+
+    <div class="small muted" style="line-height:1.5;margin-top:14px">
+      Direction mapping assumes MPU X points forward and Y points right.
+      If the box or commands move opposite to the real board, the sensor
+      may be mounted in a different orientation.
+    </div>
+  </section>
+
+
+  <!-- ROLL AND PITCH -->
+  <section class="panel">
+    <h2>FUSED ORIENTATION</h2>
+
+    <div class="readings">
+      <div class="read">
+        <label>Roll</label>
+        <strong id="roll">—°</strong>
+      </div>
+
+      <div class="read">
+        <label>Pitch</label>
+        <strong id="pitch">—°</strong>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ACCELEROMETER -->
+  <section class="panel">
+    <h2>ACCELEROMETER · g</h2>
+
+    <div class="values">
+      <div class="value">
+        <span>X</span><b id="ax">—</b>
+      </div>
+
+      <div class="value">
+        <span>Y</span><b id="ay">—</b>
+      </div>
+
+      <div class="value">
+        <span>Z</span><b id="az">—</b>
+      </div>
+
+      <div class="value">
+        <span>Magnitude</span><b id="amag">—</b>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- GYROSCOPE -->
+  <section class="panel">
+    <h2>GYROSCOPE · °/s</h2>
+
+    <div class="values">
+      <div class="value">
+        <span>X</span><b id="gx">—</b>
+      </div>
+
+      <div class="value">
+        <span>Y</span><b id="gy">—</b>
+      </div>
+
+      <div class="value">
+        <span>Z</span><b id="gz">—</b>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- RAW BLE -->
+  <section class="panel">
+    <h2>LAST BLE DATA</h2>
+    <pre id="packet">Waiting for notification…</pre>
+  </section>
+
 </div>
 </main>
+
+
 <script>
-const SERVICE='6E400001-B5A3-F393-E0A9-E50E24DCCA9E';
-const TX='6E400003-B5A3-F393-E0A9-E50E24DCCA9E';
-const $=id=>document.getElementById(id);
-function setStatus(text,connected){$('status').textContent=text;$('dot').classList.toggle('on',connected)}
-function parsePacket(line){
- const result={};
- for(const item of line.split(',')){
-  const match=item.trim().match(/^([A-Z]+):(-?\d+(?:\.\d+)?)/);
-  if(match)result[match[1]]=Number(match[2]);
- }
- return result;
+
+// IMPORTANT:
+// Use numeric 16-bit UUIDs in Web Bluetooth.
+// Do not write these as strings like "0x1234".
+
+const SERVICE = 0x1234;
+const TX = 0x1236;
+
+const $ = id => document.getElementById(id);
+
+
+function setStatus(text, connected) {
+  $("status").textContent = text;
+  $("dot").classList.toggle("on", connected);
 }
-function update(event){
- const line=new TextDecoder().decode(event.target.value).trim();
- if(!line || line.startsWith('['))return;
- const d=parsePacket(line);
- if(!['R','P','AX','AY','AZ','GX','GY','GZ'].some(k=>Number.isFinite(d[k])))return;
- $('packet').textContent=line;
- const r=d.R,p=d.P;
- if(Number.isFinite(r))$('roll').textContent=r.toFixed(2)+'°';
- if(Number.isFinite(p))$('pitch').textContent=p.toFixed(2)+'°';
- for(const [key,id] of [['AX','ax'],['AY','ay'],['AZ','az'],['GX','gx'],['GY','gy'],['GZ','gz']]){
-  if(Number.isFinite(d[key]))$(id).textContent=d[key].toFixed(3);
- }
- if([d.AX,d.AY,d.AZ].every(Number.isFinite)){
-  $('amag').textContent=Math.sqrt(d.AX*d.AX+d.AY*d.AY+d.AZ*d.AZ).toFixed(3)+' g';
- }
- if(Number.isFinite(r)&&Number.isFinite(p)){
-  // CSS cube axes are chosen to give a readable board-like response.
-  $('cube').style.transform=`rotateX(${p}deg) rotateY(${-r}deg)`;
-  const threshold=5,active=[];
-  if(p>threshold)active.push('front');
-  if(p< -threshold)active.push('back');
-  if(r< -threshold)active.push('left');
-  if(r>threshold)active.push('right');
-  for(const id of ['front','back','left','right'])$(id).classList.toggle('active',active.includes(id));
-  $('command').textContent=active.length?active.map(x=>'TILT '+x.toUpperCase()).join(' + '):'LEVEL / HOLD';
-  $('command').style.color=active.length?'var(--amber)':'var(--green)';
- }
+
+
+function parsePacket(line) {
+
+  const result = {};
+
+  for (const item of line.split(",")) {
+
+    const match = item.trim().match(
+      /^([A-Z]+):(-?\d+(?:\.\d+)?)/ 
+    );
+
+    if (match) {
+      result[match[1]] = Number(match[2]);
+    }
+  }
+
+  return result;
 }
-$('connect').addEventListener('click',async()=>{
- if(!navigator.bluetooth){alert('Web Bluetooth requires Chrome or Edge on HTTPS or localhost.');return}
- try{
-  $('connect').disabled=true;
-  const device=await navigator.bluetooth.requestDevice({filters:[{name:'ESP-QUAD'}],optionalServices:[SERVICE]});
-  device.addEventListener('gattserverdisconnected',()=>{setStatus('Disconnected',false);$('connect').disabled=false;$('connect').textContent='Reconnect ESP-QUAD'});
-  const server=await device.gatt.connect();
-  const service=await server.getPrimaryService(SERVICE);
-  const tx=await service.getCharacteristic(TX);
-  await tx.startNotifications();
-  tx.addEventListener('characteristicvaluechanged',update);
-  setStatus('Connected · '+device.name,true);
-  $('connect').textContent='Connected';
-  $('connect').disabled=true;
- }catch(error){console.error(error);setStatus('Connection failed',false);$('connect').disabled=false;alert(error.message)}
+
+
+// --------------------------------------------------
+// HANDLE BLE DATA
+// --------------------------------------------------
+
+function update(event) {
+
+  const line = new TextDecoder()
+    .decode(event.target.value)
+    .trim();
+
+  if (!line || line.startsWith("[")) {
+    return;
+  }
+
+  const d = parsePacket(line);
+
+  if (![
+    "R", "P",
+    "AX", "AY", "AZ",
+    "GX", "GY", "GZ"
+  ].some(k => Number.isFinite(d[k]))) {
+    return;
+  }
+
+  $("packet").textContent = line;
+
+  const r = d.R;
+  const p = d.P;
+
+  if (Number.isFinite(r)) {
+    $("roll").textContent = r.toFixed(2) + "°";
+  }
+
+  if (Number.isFinite(p)) {
+    $("pitch").textContent = p.toFixed(2) + "°";
+  }
+
+  // Accelerometer and gyroscope
+  for (const [key, id] of [
+    ["AX", "ax"],
+    ["AY", "ay"],
+    ["AZ", "az"],
+    ["GX", "gx"],
+    ["GY", "gy"],
+    ["GZ", "gz"]
+  ]) {
+
+    if (Number.isFinite(d[key])) {
+      $(id).textContent = d[key].toFixed(3);
+    }
+  }
+
+  // Acceleration magnitude
+  if ([d.AX, d.AY, d.AZ].every(Number.isFinite)) {
+
+    const magnitude = Math.sqrt(
+      d.AX * d.AX +
+      d.AY * d.AY +
+      d.AZ * d.AZ
+    );
+
+    $("amag").textContent = magnitude.toFixed(3) + " g";
+  }
+
+
+  // ------------------------------------------------
+  // 3D ROTATION AND COMMAND DETECTION
+  // ------------------------------------------------
+
+  if (Number.isFinite(r) && Number.isFinite(p)) {
+
+    $("cube").style.transform =
+      `rotateX(${p}deg) rotateY(${-r}deg)`;
+
+    const threshold = 5;
+    const active = [];
+
+    if (p > threshold) {
+      active.push("front");
+    }
+
+    if (p < -threshold) {
+      active.push("back");
+    }
+
+    if (r < -threshold) {
+      active.push("left");
+    }
+
+    if (r > threshold) {
+      active.push("right");
+    }
+
+    for (const id of [
+      "front", "back", "left", "right"
+    ]) {
+      $(id).classList.toggle(
+        "active",
+        active.includes(id)
+      );
+    }
+
+    $("command").textContent =
+      active.length
+        ? active.map(x => "TILT " + x.toUpperCase()).join(" + ")
+        : "LEVEL / HOLD";
+
+    $("command").style.color =
+      active.length ? "var(--amber)" : "var(--green)";
+  }
+}
+
+
+// --------------------------------------------------
+// BLE CONNECTION
+// --------------------------------------------------
+
+$("connect").addEventListener("click", async () => {
+
+  if (!navigator.bluetooth) {
+
+    alert(
+      "Web Bluetooth requires Chrome or Edge on HTTPS or localhost."
+    );
+
+    return;
+  }
+
+  try {
+
+    $("connect").disabled = true;
+
+    const device = await navigator.bluetooth.requestDevice({
+
+      filters: [
+        { name: "ESP-QUAD" }
+      ],
+
+      optionalServices: [SERVICE]
+    });
+
+
+    device.addEventListener(
+      "gattserverdisconnected",
+      () => {
+
+        setStatus("Disconnected", false);
+
+        $("connect").disabled = false;
+        $("connect").textContent = "Reconnect ESP-QUAD";
+      }
+    );
+
+
+    const server = await device.gatt.connect();
+
+    const service = await server.getPrimaryService(SERVICE);
+
+    const tx = await service.getCharacteristic(TX);
+
+    await tx.startNotifications();
+
+    tx.addEventListener(
+      "characteristicvaluechanged",
+      update
+    );
+
+    setStatus("Connected · " + device.name, true);
+
+    $("connect").textContent = "Connected";
+    $("connect").disabled = true;
+
+  } catch (error) {
+
+    console.error(error);
+
+    setStatus("Connection failed", false);
+
+    $("connect").disabled = false;
+
+    alert(error.message);
+  }
 });
-</script></body></html>
+
+</script>
+
+</body>
+</html>
