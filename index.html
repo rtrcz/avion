@@ -1,717 +1,145 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#07111f">
-  <title>AVION Controller — Flight Deck</title>
-  <style>
-    :root {
-      color-scheme: dark;
-      --bg: #07111f;
-      --grid: rgba(148,163,184,.035);
-      --panel: rgba(15,27,45,.95);
-      --border: rgba(148,163,184,.16);
-      --border-strong: rgba(148,163,184,.28);
-      --cyan: #38d5ee;
-      --cyan-soft: rgba(56,213,238,.13);
-      --green: #36d399;
-      --green-soft: rgba(54,211,153,.13);
-      --red: #fb7185;
-      --red-soft: rgba(251,113,133,.13);
-      --amber: #fbbf24;
-      --amber-soft: rgba(251,191,36,.13);
-      --text: #eef6ff;
-      --muted: #91a4bb;
-      --muted-2: #647991;
-      --radius: 8px;
-      --shadow: 0 4px 20px rgba(0,0,0,.3);
-      --st: env(safe-area-inset-top, 0px);
-      --sb: env(safe-area-inset-bottom, 0px);
-      --sl: env(safe-area-inset-left, 0px);
-      --sr: env(safe-area-inset-right, 0px);
-    }
-    * { box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-    html, body {
-      width: 100vw; height: 100vh; height: 100dvh;
-      margin: 0; padding: 0; overflow: hidden; position: fixed;
-      color: var(--text);
-      background:
-        radial-gradient(ellipse at 15% 0%, rgba(8,145,178,.13), transparent 38rem),
-        radial-gradient(ellipse at 100% 90%, rgba(30,64,175,.12), transparent 36rem),
-        linear-gradient(var(--grid) 1px, transparent 1px),
-        linear-gradient(90deg, var(--grid) 1px, transparent 1px),
-        var(--bg);
-      background-size: auto, auto, 20px 20px, 20px 20px, auto;
-      font: 11px/1.2 ui-sans-serif, system-ui, -apple-system, Inter, sans-serif;
-      -webkit-font-smoothing: antialiased;
-    }
-    button { font: inherit; -webkit-tap-highlight-color: transparent; }
-
-    .app {
-      width: 100%; height: 100%;
-      padding: max(4px, var(--st)) max(6px, var(--sr)) max(4px, var(--sb)) max(6px, var(--sl));
-      display: grid;
-      grid-template-rows: auto auto 1fr auto;
-      gap: 4px;
-      overflow: hidden;
-    }
-
-    /* TOP BAR */
-    .topbar {
-      display: flex; align-items: center; justify-content: space-between; gap: 6px;
-      padding: 3px 8px; border: 1px solid var(--border); border-radius: var(--radius);
-      background: var(--panel); box-shadow: var(--shadow); backdrop-filter: blur(12px);
-      min-height: 0;
-    }
-    .brand { display:flex; align-items:center; gap:6px; min-width:0; }
-    .brand-mark {
-      width: 22px; height: 22px; flex: 0 0 auto; display:grid; place-items:center;
-      border-radius: 6px; color: var(--cyan); background: var(--cyan-soft);
-      border: 1px solid rgba(56,213,238,.28); font-size: 11px; font-weight: 900;
-    }
-    .brand-title { margin:0; font-size:10px; font-weight:900; letter-spacing:.08em; color: var(--cyan); line-height:1.1; }
-    .brand-sub { color:var(--muted); font-size:7px; letter-spacing:.06em; text-transform:uppercase; }
-    .status-group { display:flex; gap:3px; align-items:center; flex-wrap:nowrap; }
-
-    .pill {
-      display:inline-flex; align-items:center; gap:3px; padding:2px 5px;
-      border:1px solid var(--border); border-radius:999px; background:rgba(2,8,23,.45);
-      color:var(--muted); font-size:7.5px; font-weight:800; letter-spacing:.05em;
-      white-space:nowrap;
-    }
-    .dot { width:5px; height:5px; border-radius:50%; background:currentColor; box-shadow:0 0 6px currentColor; }
-    .pill.good { color:var(--green); border-color:rgba(54,211,153,.28); background:var(--green-soft); }
-    .pill.bad  { color:var(--red);   border-color:rgba(251,113,133,.3);  background:var(--red-soft); }
-    .pill.warn { color:var(--amber); border-color:rgba(251,191,36,.28);  background:var(--amber-soft); }
-
-    /* TOP METRICS */
-    .metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:3px; }
-    .metric, .panel {
-      border:1px solid var(--border); border-radius:var(--radius);
-      background:var(--panel); box-shadow:var(--shadow); min-width:0;
-    }
-    .metric { padding:2px 4px; text-align:center; }
-    .metric-label {
-      color:var(--muted); font-size:6.5px; font-weight:800; letter-spacing:.08em;
-      text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    }
-    .metric-value {
-      margin-top:1px; color:var(--cyan); font:700 10px ui-monospace,monospace;
-      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-    }
-
-    /* WORKSPACE — 3 cols */
-    .workspace {
-      display:grid; grid-template-columns: 78px 1fr 112px;
-      gap:4px; min-height:0; overflow:hidden;
-    }
-    .panel {
-      padding:4px; display:flex; flex-direction:column; justify-content:space-between;
-      align-items:center; min-height:0; overflow:hidden;
-    }
-    .panel-head { display:flex; align-items:center; justify-content:space-between; gap:3px; width:100%; flex-shrink:0; }
-    .panel-title { margin:0; font-size:8px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
-
-    /* THROTTLE */
-    .throttle-panel { align-items:center; }
-    .throttle-control {
-      width:100%; flex:1; display:flex; flex-direction:column; align-items:center;
-      gap:3px; padding:1px 0; min-height:0;
-    }
-    .throttle-track {
-      position:relative; width:32px; flex:1; min-height:60px;
-      border:2px solid var(--border-strong); border-radius:16px;
-      background:linear-gradient(180deg,rgba(2,8,23,.9),rgba(15,30,49,.95));
-      box-shadow:inset 0 0 12px rgba(0,0,0,.45);
-      cursor:ns-resize; touch-action:none;
-    }
-    .throttle-track::before {
-      content:""; position:absolute; top:6px; bottom:6px; left:50%; width:2px;
-      transform:translateX(-50%); border-radius:2px; background:rgba(148,163,184,.2);
-    }
-    .throttle-knob {
-      position:absolute; left:50%; bottom:0; transform:translateX(-50%);
-      width:22px; height:22px; border-radius:50%; border:2px solid #b8f5ff;
-      background:linear-gradient(145deg,#40e0f3,#087eaa);
-      box-shadow:0 0 10px rgba(56,213,238,.38);
-      pointer-events:none;
-      will-change: bottom;
-    }
-    .range-labels {
-      position:absolute; left:calc(100% + 3px); top:3px; bottom:3px;
-      display:flex; flex-direction:column; justify-content:space-between;
-      color:var(--muted-2); font-size:6px; pointer-events:none;
-    }
-    .control-value { color:var(--cyan); font:700 9px ui-monospace,monospace; text-align:center; }
-    .hold-row { display:flex; align-items:center; gap:3px; color:var(--muted); font-size:7px; cursor:pointer; }
-    .hold-row input { accent-color:var(--cyan); width:9px; height:9px; }
-
-    /* CENTER */
-    .center-panel { display:flex; flex-direction:column; align-items:center; justify-content:space-between; gap:3px; }
-    .button-row { display:flex; gap:3px; width:100%; justify-content:center; flex-shrink:0; }
-    .btn {
-      min-height:22px; padding:2px 5px; border:1px solid var(--border-strong); border-radius:5px;
-      color:var(--text); background:#1b2b41; font-size:7.5px; font-weight:900; letter-spacing:.04em;
-      text-transform:uppercase; cursor:pointer; flex:1; white-space:nowrap;
-    }
-    .btn:active:not(:disabled) { transform:scale(.95); }
-    .btn:disabled { opacity:.35; cursor:not-allowed; }
-    .btn-primary { background:#087e9b; border-color:#16a6c4; color:#fff; }
-    .btn-safe    { background:#075b49; border-color:#0d9a75; color:#a7f3d0; }
-    .btn-danger  { background:#7f1d32; border-color:#be3451; color:#fecdd3; }
-
-    .horizon-wrap { display:flex; flex-direction:column; align-items:center; gap:2px; flex:1; justify-content:center; min-height:0; }
-    .horizon {
-      width:min(13vh, 68px); aspect-ratio:1; position:relative; overflow:hidden;
-      border:2px solid #53677e; border-radius:50%; background:#07101e;
-      box-shadow:inset 0 0 10px rgba(0,0,0,.55); flex:0 0 auto;
-    }
-    .horizon-world {
-      position:absolute; width:180%; height:180%; left:-40%; top:-40%;
-      transform-origin: 50% 50%;
-      background:linear-gradient(to bottom, rgba(6,182,212,0.4) 0 50%, rgba(245,158,11,0.4) 50% 100%);
-      transition:transform .05s linear;
-    }
-    .horizon-world::after { content:""; position:absolute; top:50%; left:0; width:100%; height:2px; background:#22d3ee; }
-    .horizon-mark { position:absolute; inset:0; display:grid; place-items:center; pointer-events:none; }
-    .horizon-mark span { width:18px; height:4px; border-left:2px solid #36d399; border-right:2px solid #36d399; }
-    .horizon-caption { color:var(--muted); font-size:6.5px; letter-spacing:.08em; text-transform:uppercase; }
-
-    /* STICK */
-    .stick-panel { align-items:center; }
-    .stick-wrap { display:flex; flex:1; align-items:center; justify-content:center; width:100%; min-height:0; }
-    .stick {
-      width:min(100%, 86px); aspect-ratio:1; max-height:100%; position:relative;
-      border:2px solid var(--border-strong);
-      border-radius:50%; background:radial-gradient(circle,#14243a 0,#07101e 72%);
-      box-shadow:inset 0 0 10px rgba(0,0,0,.6);
-      cursor:crosshair; touch-action:none;
-      flex:0 0 auto;
-    }
-    .stick::before { content:""; position:absolute; inset:20%; border:1px dashed rgba(148,163,184,.25); border-radius:50%; }
-    .stick::after  { content:""; position:absolute; top:50%; left:10%; right:10%; height:1px; background:rgba(148,163,184,.2); }
-    .stick-axis { position:absolute; left:50%; top:10%; bottom:10%; width:1px; background:rgba(148,163,184,.2); }
-    .stick-knob {
-      position:absolute; left:50%; top:50%; width:32%; aspect-ratio:1;
-      transform:translate(-50%,-50%);
-      border-radius:50%; border:2px solid #b8f5ff;
-      background:linear-gradient(145deg,#40e0f3,#087eaa);
-      box-shadow:0 0 10px rgba(56,213,238,.35); pointer-events:none;
-      will-change: left, top;
-    }
-    .readout {
-      width:100%; text-align:center; border:1px solid var(--border); border-radius:4px;
-      padding:2px; background:rgba(2,8,23,.45); color:var(--cyan);
-      font:700 7.5px ui-monospace,monospace; flex-shrink:0;
-    }
-
-    /* LOWER */
-    .lower-section { display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr; gap:3px; min-height:0; }
-    .telemetry-item {
-      padding:2px 3px; border-radius:4px; background:rgba(2,8,23,.35);
-      border:1px solid var(--border); text-align:center; min-width:0;
-    }
-    .telemetry-item .metric-value { font-size:8.5px; }
-    .log {
-      grid-column: 1 / -1;
-      height: 22px; overflow-y:auto; padding:2px 4px; border-radius:4px;
-      border:1px solid var(--border); background:#050d18; color:#a8bbcf;
-      font:7.5px/1.15 ui-monospace,monospace; white-space:pre-wrap;
-    }
-
-    /* landscape strict */
-    @media (max-height: 380px) {
-      .app { padding:2px 4px; gap:2px; }
-      .topbar { padding:2px 6px; }
-      .brand-mark { width:18px; height:18px; font-size:10px; }
-      .brand-title { font-size:9px; }
-      .brand-sub { font-size:6px; }
-      .pill { font-size:7px; padding:1px 4px; }
-      .metric-label { font-size:6px; }
-      .metric-value { font-size:9px; }
-      .workspace { grid-template-columns: 68px 1fr 100px; }
-      .panel-title { font-size:7px; }
-      .btn { min-height:18px; font-size:7px; padding:1px 4px; }
-      .horizon { width:min(12vh, 56px); }
-      .stick { width:min(100%, 74px); }
-      .telemetry-item .metric-value { font-size:7.5px; }
-      .log { height:18px; font-size:7px; }
-    }
-    @media (max-height: 320px) {
-      .horizon { width:48px; }
-      .stick { width:64px; }
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ESP-QUAD · MPU 3D Orientation</title>
+<style>
+:root{color-scheme:dark;--bg:#090f1d;--panel:#131e31;--line:#2a3a55;--text:#eef5ff;--muted:#9aabc3;--blue:#62c5ff;--green:#62e0ad;--amber:#ffc477}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 0,#1a3150 0,var(--bg) 55%);color:var(--text);font:15px system-ui,Segoe UI,sans-serif}
+main{max-width:1000px;margin:auto;padding:25px 17px 45px}.head{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap}
+h1{font-size:clamp(23px,4vw,34px);margin:0}.muted{color:var(--muted)}.small{font-size:12px}
+button{border:0;border-radius:11px;background:var(--blue);color:#071522;padding:12px 17px;font-weight:800;cursor:pointer}button:disabled{opacity:.5}
+.status{border:1px solid var(--line);padding:9px 12px;border-radius:30px;color:var(--muted);font-size:13px}
+.dot{display:inline-block;width:8px;height:8px;background:#78869b;border-radius:50%;margin-right:7px}.dot.on{background:var(--green);box-shadow:0 0 10px var(--green)}
+.layout{display:grid;grid-template-columns:1.25fr .75fr;gap:15px;margin-top:20px}
+.panel{background:linear-gradient(145deg,#17243a,#111a2b);border:1px solid var(--line);border-radius:18px;padding:18px;min-width:0}
+.panel h2{font-size:14px;letter-spacing:.08em;color:#c4d5ed;margin:0 0 14px}
+.stage{height:390px;display:flex;align-items:center;justify-content:center;perspective:850px;overflow:hidden;background:radial-gradient(ellipse,#1b2c45 0,#111b2d 58%,#0e1727 100%);border-radius:14px}
+.cube-wrap{width:180px;height:180px;position:relative;transform-style:preserve-3d;transition:transform .07s linear}
+.face{position:absolute;width:180px;height:180px;border:2px solid #b5e5ff;background:#2b83b9c9;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:7px;font-size:18px;font-weight:900;letter-spacing:.06em;backface-visibility:hidden;box-shadow:inset 0 0 35px #ffffff16}
+.face span{font-size:11px;font-weight:600;color:#e0f4ff}
+.front{transform:translateZ(90px);background:#167eb6d9}.back{transform:rotateY(180deg) translateZ(90px);background:#27527bd9}
+.right{transform:rotateY(90deg) translateZ(90px);background:#258d8bd9}.left{transform:rotateY(-90deg) translateZ(90px);background:#286b9bd9}
+.top{transform:rotateX(90deg) translateZ(90px);background:#3d9b75df}.bottom{transform:rotateX(-90deg) translateZ(90px);background:#a57843df}
+.readings{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.read{background:#0c1627;border:1px solid #293951;border-radius:12px;padding:12px}.read label{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.07em}.read strong{font-size:23px;font-variant-numeric:tabular-nums}
+.command{font-size:clamp(21px,4vw,29px);font-weight:900;text-align:center;color:var(--green);padding:12px 0 4px;min-height:55px}
+.dirgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:10px}.dir{padding:11px;border-radius:11px;background:#0d1829;border:1px solid var(--line);text-align:center;color:var(--muted)}.dir.active{background:#12372f;border-color:#3cae83;color:#d4ffeb}
+.values{display:grid;grid-template-columns:1fr 1fr;gap:0 15px}.value{display:flex;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid #293951}.value span{color:var(--muted)}.value b{font-variant-numeric:tabular-nums}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#0a1424;border-radius:10px;padding:12px;color:#b9cce5;font:12px ui-monospace,monospace;min-height:45px}
+@media(max-width:720px){.layout{grid-template-columns:1fr}.stage{height:320px}.cube-wrap{transform-origin:center}}
+</style>
 </head>
-<body>
-  <main class="app">
-    <header class="topbar">
-      <div class="brand">
-        <div class="brand-mark" aria-hidden="true">A</div>
-        <div>
-          <h1 class="brand-title">AVION CONTROLLER</h1>
-          <div class="brand-sub">S3 · Flight Deck</div>
-        </div>
-      </div>
-      <div class="status-group">
-        <span id="connection" class="pill bad"><i class="dot"></i> DISC</span>
-        <span id="armStatus" class="pill"><i class="dot"></i> DISARMED</span>
-        <span id="imuStatus" class="pill warn"><i class="dot"></i> IMU ?</span>
-        <span id="faultStatus" class="pill"><i class="dot"></i> OK</span>
-      </div>
-    </header>
-
-    <section class="metrics">
-      <article class="metric">
-        <div class="metric-label">Battery</div>
-        <div class="metric-value" id="batteryVoltage" style="color:var(--green);">— V</div>
-      </article>
-      <article class="metric">
-        <div class="metric-label">Front Range</div>
-        <div class="metric-value" id="frontRange">— mm</div>
-      </article>
-      <article class="metric">
-        <div class="metric-label">Roll / Pitch</div>
-        <div class="metric-value" id="attitude">0.0° / 0.0°</div>
-      </article>
-      <article class="metric">
-        <div class="metric-label">State</div>
-        <div class="metric-value" id="stateValue">DISARMED</div>
-      </article>
-    </section>
-
-    <section class="workspace">
-      <section class="panel throttle-panel">
-        <div class="panel-head"><h2 class="panel-title">Throttle</h2></div>
-        <div class="throttle-control">
-          <div class="throttle-track" id="throttleTrack">
-            <div class="throttle-knob" id="throttleKnob"></div>
-            <div class="range-labels"><span>MAX</span><span>MIN</span></div>
-          </div>
-          <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
-            <div class="control-value" id="throttleReadout">0%</div>
-            <label class="hold-row">
-              <input type="checkbox" id="holdThrottle" checked> Hold
-            </label>
-          </div>
-        </div>
-      </section>
-
-      <section class="panel center-panel">
-        <div class="button-row">
-          <button class="btn btn-primary" id="connectBtn">Connect BLE</button>
-          <button class="btn" id="disconnectBtn" disabled>Drop</button>
-        </div>
-
-        <div class="horizon-wrap">
-          <div class="horizon">
-            <div class="horizon-world" id="horizonWorld"></div>
-            <div class="horizon-mark"><span></span></div>
-          </div>
-          <div class="horizon-caption">Attitude</div>
-        </div>
-
-        <div class="button-row">
-          <button class="btn btn-safe"   id="armBtn"    disabled>Arm</button>
-          <button class="btn"            id="disarmBtn" disabled>Disarm</button>
-          <button class="btn btn-danger" id="stopBtn"   disabled>STOP</button>
-        </div>
-      </section>
-
-      <section class="panel stick-panel">
-        <div class="panel-head"><h2 class="panel-title">Roll / Pitch</h2></div>
-        <div class="stick-wrap">
-          <div class="stick" id="rightStick">
-            <div class="stick-axis"></div>
-            <div class="stick-knob" id="stickKnob"></div>
-          </div>
-        </div>
-        <div class="readout" id="rightReadout">R: 0 · P: 0</div>
-      </section>
-    </section>
-
-    <section class="lower-section">
-      <div class="telemetry-item"><div class="metric-label">PWM</div><div class="metric-value" id="pwmValue">—</div></div>
-      <div class="telemetry-item"><div class="metric-label">BEMF</div><div class="metric-value" id="bemfValue">—</div></div>
-      <div class="telemetry-item"><div class="metric-label">Gyro Z</div><div class="metric-value" id="gyroRate">—</div></div>
-      <div class="telemetry-item"><div class="metric-label">Obstacle</div><div class="metric-value" id="obstacleValue">—</div></div>
-      <div class="telemetry-item"><div class="metric-label">Upside</div><div class="metric-value" id="upsideValue">—</div></div>
-      <div class="telemetry-item"><div class="metric-label">Reject</div><div class="metric-value" id="rejectValue">—</div></div>
-      <div class="log" id="log">AVION deck ready. Tap Connect BLE.</div>
-    </section>
-  </main>
-
-  <script>
-  "use strict";
-
-  const SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
-  const RX_UUID      = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
-  const TX_UUID      = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
-  const DEVICE_NAME  = "ESP32S3_Brushed_FC";
-  const COMMAND_MS   = 50;    // 20 Hz joystick frames
-  const STALE_MS     = 1500;  // telemetry timeout threshold
-
-  const REJECT_MAP = {
-    0: "OK", 1: "NO IMU", 2: "NOT CAL", 3: "NO BLE",
-    4: "THR HI", 5: "NOT LVL", 6: "UPSIDE"
-  };
-
-  const $ = id => document.getElementById(id);
-
-  const S = {
-    device: null, server: null, rx: null, tx: null,
-    connected: false,
-    flightState: "DISARMED",
-    reject: 0,
-    upsideDown: false,
-    obstacle: false,
-    imuReady: false,
-    calReady: false,
-    batV: 0,
-    frontMm: 0,
-    lastTelemetryAt: 0,
-    roll: 0, pitch: 0, yaw: 0, throttle: 0,
-    writeBusy: false,
-    timer: null,
-    ptrThrottle: null,
-    ptrStick: null,
-    pendingArm: false
-  };
-
-  const enc = new TextEncoder();
-  const dec = new TextDecoder();
-
-  function log(msg) {
-    $("log").textContent = `[${new Date().toLocaleTimeString().slice(0,8)}] ${msg}`;
-  }
-
-  function setPill(id, text, kind) {
-    const el = $(id);
-    el.className = `pill ${kind || ""}`.trim();
-    el.replaceChildren();
-    const d = document.createElement("i");
-    d.className = "dot";
-    el.append(d, document.createTextNode(" " + text));
-  }
-
-  function refreshUI() {
-    const usable = S.connected && S.imuReady && S.calReady;
-    const teleFresh = S.connected && (Date.now() - S.lastTelemetryAt) < STALE_MS;
-
-    $("connectBtn").disabled    = S.connected;
-    $("disconnectBtn").disabled = !S.connected;
-    $("armBtn").disabled =
-      !usable || !teleFresh ||
-      S.flightState === "ARMED" ||
-      S.throttle > 0 ||
-      S.pendingArm ||
-      S.upsideDown;
-    $("disarmBtn").disabled = !S.connected || S.flightState !== "ARMED";
-    $("stopBtn").disabled   = !S.connected;
-
-    setPill("connection", S.connected ? "CONN" : "DISC", S.connected ? "good" : "bad");
-
-    let armText = "DISARMED", armKind = "";
-    if (S.flightState === "ARMED")         { armText = "ARMED";    armKind = "bad"; }
-    else if (S.flightState === "FAILSAFE") { armText = "FAILSAFE"; armKind = "bad"; }
-    else if (S.flightState === "ARMING")   { armText = "ARMING";   armKind = "warn"; }
-    setPill("armStatus", armText, armKind);
-
-    const imuOK = S.imuReady && S.calReady;
-    setPill("imuStatus", imuOK ? "IMU OK" : "IMU FAULT", imuOK ? "good" : "warn");
-
-    let faultText = "OK", faultKind = "good";
-    if (S.upsideDown)       { faultText = "UPSIDE DOWN"; faultKind = "bad"; }
-    else if (S.reject !== 0) { faultText = REJECT_MAP[S.reject] || "REJECT"; faultKind = "warn"; }
-    else if (S.obstacle)   { faultText = "OBSTACLE";    faultKind = "warn"; }
-    setPill("faultStatus", faultText, faultKind);
-
-    $("stateValue").textContent = S.flightState;
-    $("stateValue").style.color =
-      S.flightState === "ARMED"    ? "var(--red)"  :
-      S.flightState === "FAILSAFE" ? "var(--red)"  :
-      S.flightState === "ARMING"   ? "var(--amber)": "var(--cyan)";
-
-    updateStickUI();
-    updateThrottleUI();
-  }
-
-  function resetInputs() {
-    S.roll = 0; S.pitch = 0; S.yaw = 0;
-    updateStickUI();
-  }
-
-  function updateThrottleUI() {
-    const track = $("throttleTrack");
-    const knob  = $("throttleKnob");
-    const trackH = track.clientHeight;
-    const knobH  = knob.clientHeight || 22;
-    const usable = Math.max(1, trackH - knobH - 4);
-    knob.style.bottom = `${(S.throttle / 100) * usable}px`;
-    $("throttleReadout").textContent = `${Math.round(S.throttle)}%`;
-  }
-
-  function initThrottle() {
-    const track = $("throttleTrack");
-    function setFromEvent(ev) {
-      const rect = track.getBoundingClientRect();
-      const knobH = $("throttleKnob").clientHeight || 22;
-      const usable = Math.max(1, rect.height - knobH - 4);
-      const yFromTop = ev.clientY - rect.top - (knobH / 2) - 2;
-      const ratio = 1 - Math.max(0, Math.min(1, yFromTop / usable));
-      S.throttle = Math.round(ratio * 100);
-      updateThrottleUI();
-    }
-    track.addEventListener("pointerdown", ev => {
-      if (S.ptrThrottle !== null) return;
-      S.ptrThrottle = ev.pointerId;
-      track.setPointerCapture(ev.pointerId);
-      setFromEvent(ev);
-    });
-    track.addEventListener("pointermove", ev => {
-      if (ev.pointerId === S.ptrThrottle) setFromEvent(ev);
-    });
-    const release = ev => {
-      if (ev.pointerId !== S.ptrThrottle) return;
-      S.ptrThrottle = null;
-      if (!$("holdThrottle").checked) { S.throttle = 0; updateThrottleUI(); }
-    };
-    track.addEventListener("pointerup", release);
-    track.addEventListener("pointercancel", release);
-    track.addEventListener("lostpointercapture", release);
-    $("holdThrottle").addEventListener("change", () => {
-      if (!$("holdThrottle").checked) { S.throttle = 0; updateThrottleUI(); }
-    });
-  }
-
-  function applyDeadzone(v, dz = 0.10) {
-    const m = Math.abs(v);
-    if (m <= dz) return 0;
-    const n = (m - dz) / (1 - dz);
-    return Math.sign(v) * Math.round((0.7 * n + 0.3 * n * n) * 100);
-  }
-
-  function updateStickUI() {
-    $("stickKnob").style.left = `${50 + S.roll  * 0.32}%`;
-    $("stickKnob").style.top  = `${50 - S.pitch * 0.32}%`;
-    $("rightReadout").textContent = `R:${Math.round(S.roll)} · P:${Math.round(S.pitch)}`;
-  }
-
-  function initStick() {
-    const stick = $("rightStick");
-    function move(ev) {
-      const r = stick.getBoundingClientRect();
-      const radius = Math.min(r.width, r.height) * 0.37;
-      let dx = ev.clientX - (r.left + r.width / 2);
-      let dy = ev.clientY - (r.top  + r.height / 2);
-      const dist = Math.hypot(dx, dy);
-      if (dist > radius) { dx *= radius / dist; dy *= radius / dist; }
-      S.roll  = applyDeadzone(dx / radius);
-      S.pitch = applyDeadzone(-dy / radius);
-      updateStickUI();
-    }
-    stick.addEventListener("pointerdown", ev => {
-      if (S.ptrStick !== null) return;
-      S.ptrStick = ev.pointerId;
-      stick.setPointerCapture(ev.pointerId);
-      move(ev);
-    });
-    stick.addEventListener("pointermove", ev => {
-      if (ev.pointerId === S.ptrStick) move(ev);
-    });
-    const release = ev => {
-      if (ev.pointerId !== S.ptrStick) return;
-      S.ptrStick = null;
-      S.roll = 0; S.pitch = 0;
-      updateStickUI();
-    };
-    stick.addEventListener("pointerup", release);
-    stick.addEventListener("pointercancel", release);
-    stick.addEventListener("lostpointercapture", release);
-  }
-
-  async function writeRaw(text) {
-    if (!S.connected || !S.rx) return false;
-    while (S.writeBusy) await new Promise(r => setTimeout(r, 1));
-    S.writeBusy = true;
-    try {
-      await S.rx.writeValue(enc.encode(text));
-      return true;
-    } catch (e) {
-      log(`write failed: ${e.message || e}`);
-      return false;
-    } finally {
-      S.writeBusy = false;
-    }
-  }
-
-  function buildCommand() {
-    return `J,${Math.round(S.roll)},${Math.round(S.pitch)},${Math.round(S.yaw)},${Math.round(S.throttle)}`;
-  }
-
-  function startLoop() {
-    stopLoop();
-    S.timer = setInterval(async () => {
-      if (!S.connected) return;
-      await writeRaw(buildCommand());
-      refreshUI();
-    }, COMMAND_MS);
-  }
-  function stopLoop() {
-    if (S.timer !== null) { clearInterval(S.timer); S.timer = null; }
-  }
-
-  async function connectBLE() {
-    if (!("bluetooth" in navigator)) { log("Web Bluetooth not available."); return; }
-    $("connectBtn").disabled = true;
-    try {
-      S.device = await navigator.bluetooth.requestDevice({
-        filters: [{ name: DEVICE_NAME }],
-        optionalServices: [SERVICE_UUID]
-      });
-      S.device.addEventListener("gattserverdisconnected", onDisconnected);
-      S.server = await S.device.gatt.connect();
-      const svc = await S.server.getPrimaryService(SERVICE_UUID);
-      S.rx = await svc.getCharacteristic(RX_UUID);
-      S.tx = await svc.getCharacteristic(TX_UUID);
-      await S.tx.startNotifications();
-      S.tx.addEventListener("characteristicvaluechanged", onTelemetry);
-      S.connected = true;
-      S.lastTelemetryAt = Date.now();
-      refreshUI();
-      startLoop();
-      log(`Connected to ${DEVICE_NAME}`);
-    } catch (e) {
-      S.connected = false;
-      refreshUI();
-      log(`Connect error: ${e.message || e}`);
-    }
-  }
-
-  function onDisconnected() {
-    S.connected = false;
-    S.flightState = "DISARMED";
-    S.rx = null; S.tx = null;
-    stopLoop();
-    resetInputs();
-    refreshUI();
-    log("BLE disconnected.");
-  }
-
-  async function disconnectBLE() {
-    try { await writeRaw("DISARM"); } catch (_) {}
-    if (S.device?.gatt?.connected) S.device.gatt.disconnect();
-    else onDisconnected();
-  }
-
-  function parseKV(raw) {
-    const out = {};
-    let depth = 0, start = 0;
-    const parts = [];
-    for (let i = 0; i < raw.length; i++) {
-      const c = raw[i];
-      if (c === "[") depth++;
-      else if (c === "]") depth--;
-      else if (c === "," && depth === 0) { parts.push(raw.slice(start, i)); start = i + 1; }
-    }
-    parts.push(raw.slice(start));
-    for (const p of parts) {
-      const c = p.indexOf(":");
-      if (c > 0) out[p.slice(0, c).trim()] = p.slice(c + 1).trim();
-    }
-    return out;
-  }
-
-  function num(d, k) {
-    if (!(k in d)) return null;
-    const v = Number(d[k]);
-    return Number.isFinite(v) ? v : null;
-  }
-
-  function onTelemetry(event) {
-    const str = dec.decode(event.target.value);
-    const kv = parseKV(str);
-    S.lastTelemetryAt = Date.now();
-
-    if ("ST" in kv) S.flightState = kv.ST;
-    if ("REJ" in kv) S.reject = Number(kv.REJ) || 0;
-    if ("UP" in kv) S.upsideDown = kv.UP === "1";
-    if ("OBS" in kv) S.obstacle = kv.OBS === "1";
-
-    // Since firmware sends valid MPU data, mark IMU and Cal as ready once data streams in
-    S.imuReady = true;
-    S.calReady = true;
-
-    const vBat = num(kv, "BAT");
-    if (vBat !== null) {
-      S.batV = vBat;
-      $("batteryVoltage").textContent = `${vBat.toFixed(2)} V`;
-      $("batteryVoltage").style.color = vBat < 3.4 ? "var(--red)" : vBat < 3.6 ? "var(--amber)" : "var(--green)";
-    }
-
-    const frontMm = num(kv, "FRONT");
-    if (frontMm !== null) {
-      S.frontMm = frontMm;
-      $("frontRange").textContent = `${frontMm} mm`;
-      $("frontRange").style.color = (frontMm > 0 && frontMm < 300) ? "var(--red)" : "var(--cyan)";
-    }
-
-    const r = num(kv, "R"), p = num(kv, "P");
-    if (r !== null && p !== null) {
-      $("attitude").textContent = `${r.toFixed(1)}° / ${p.toFixed(1)}°`;
-      const world = $("horizonWorld");
-      world.style.transform = `rotate(${-r}deg) translateY(${p * 0.8}px)`;
-    }
-
-    if ("PWM" in kv) $("pwmValue").textContent = kv.PWM;
-    if ("BEMF" in kv) $("bemfValue").textContent = kv.BEMF;
-    if ("GZ" in kv)  $("gyroRate").textContent = `${num(kv, "GZ") || 0} deg/s`;
-    
-    $("obstacleValue").textContent = S.obstacle ? "YES" : "NO";
-    $("obstacleValue").style.color = S.obstacle ? "var(--amber)" : "var(--cyan)";
-    $("upsideValue").textContent   = S.upsideDown ? "YES" : "NO";
-    $("upsideValue").style.color   = S.upsideDown ? "var(--red)" : "var(--cyan)";
-    $("rejectValue").textContent   = REJECT_MAP[S.reject] || "OK";
-
-    refreshUI();
-  }
-
-  async function sendArm() {
-    if (S.pendingArm) return;
-    S.pendingArm = true;
-    refreshUI();
-    log("Sending ARM command...");
-    const ok = await writeRaw("ARM");
-    if (ok) log("ARM sent.");
-    S.pendingArm = false;
-    refreshUI();
-  }
-
-  async function sendDisarm() {
-    log("Sending DISARM command...");
-    await writeRaw("DISARM");
-  }
-
-  async function sendStop() {
-    log("EMERGENCY STOP TRIGGERED!");
-    S.throttle = 0;
-    updateThrottleUI();
-    await writeRaw("STOP");
-  }
-
-  window.addEventListener("DOMContentLoaded", () => {
-    initThrottle();
-    initStick();
-
-    $("connectBtn").addEventListener("click", connectBLE);
-    $("disconnectBtn").addEventListener("click", disconnectBLE);
-    $("armBtn").addEventListener("click", sendArm);
-    $("disarmBtn").addEventListener("click", sendDisarm);
-    $("stopBtn").addEventListener("click", sendStop);
-
-    refreshUI();
-  });
-  </script>
-</body>
-</html>
+<body><main>
+<header class="head">
+ <div><h1>MPU6050 · 3D Orientation</h1><div class="muted">ESP-QUAD live sensor viewer</div></div>
+ <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="status"><i id="dot" class="dot"></i><span id="status">Disconnected</span></span><button id="connect">Connect ESP-QUAD</button></div>
+</header>
+<div class="layout">
+ <section class="panel">
+  <h2>LIVE 3D BOARD VIEW</h2>
+  <div class="stage">
+   <div class="cube-wrap" id="cube">
+    <div class="face front">FRONT<span>NOSE</span></div>
+    <div class="face back">BACK<span>TAIL</span></div>
+    <div class="face right">RIGHT<span>RIGHT SIDE</span></div>
+    <div class="face left">LEFT<span>LEFT SIDE</span></div>
+    <div class="face top">TOP<span>MPU6050</span></div>
+    <div class="face bottom">BOTTOM<span>UNDERSIDE</span></div>
+   </div>
+  </div>
+  <div class="small muted" style="text-align:center;margin-top:10px">The box rotates with the measured roll and pitch.</div>
+ </section>
+ <section class="panel">
+  <h2>ORIENTATION COMMAND</h2>
+  <div id="command" class="command">CONNECT DEVICE</div>
+  <div class="dirgrid">
+   <div class="dir" id="front">↑ &nbsp; TILT FRONT</div>
+   <div class="dir" id="back">↓ &nbsp; TILT BACK</div>
+   <div class="dir" id="left">← &nbsp; TILT LEFT</div>
+   <div class="dir" id="right">→ &nbsp; TILT RIGHT</div>
+  </div>
+  <div class="small muted" style="line-height:1.5;margin-top:14px">Direction mapping assumes MPU X points forward and Y points right. If the box or commands move opposite to the real board, the sensor is mounted on a different axis orientation.</div>
+ </section>
+ <section class="panel">
+  <h2>FUSED ORIENTATION</h2>
+  <div class="readings">
+   <div class="read"><label>Roll</label><strong id="roll">—°</strong></div>
+   <div class="read"><label>Pitch</label><strong id="pitch">—°</strong></div>
+  </div>
+ </section>
+ <section class="panel">
+  <h2>ACCELEROMETER · g</h2>
+  <div class="values">
+   <div class="value"><span>X</span><b id="ax">—</b></div><div class="value"><span>Y</span><b id="ay">—</b></div><div class="value"><span>Z</span><b id="az">—</b></div><div class="value"><span>Magnitude</span><b id="amag">—</b></div>
+  </div>
+ </section>
+ <section class="panel">
+  <h2>GYROSCOPE · °/s</h2>
+  <div class="values">
+   <div class="value"><span>X</span><b id="gx">—</b></div><div class="value"><span>Y</span><b id="gy">—</b></div><div class="value"><span>Z</span><b id="gz">—</b></div>
+  </div>
+ </section>
+ <section class="panel">
+  <h2>LAST BLE DATA</h2><pre id="packet">Waiting for notification…</pre>
+ </section>
+</div>
+</main>
+<script>
+const SERVICE='6E400001-B5A3-F393-E0A9-E50E24DCCA9E';
+const TX='6E400003-B5A3-F393-E0A9-E50E24DCCA9E';
+const $=id=>document.getElementById(id);
+function setStatus(text,connected){$('status').textContent=text;$('dot').classList.toggle('on',connected)}
+function parsePacket(line){
+ const result={};
+ for(const item of line.split(',')){
+  const match=item.trim().match(/^([A-Z]+):(-?\d+(?:\.\d+)?)/);
+  if(match)result[match[1]]=Number(match[2]);
+ }
+ return result;
+}
+function update(event){
+ const line=new TextDecoder().decode(event.target.value).trim();
+ if(!line || line.startsWith('['))return;
+ const d=parsePacket(line);
+ if(!['R','P','AX','AY','AZ','GX','GY','GZ'].some(k=>Number.isFinite(d[k])))return;
+ $('packet').textContent=line;
+ const r=d.R,p=d.P;
+ if(Number.isFinite(r))$('roll').textContent=r.toFixed(2)+'°';
+ if(Number.isFinite(p))$('pitch').textContent=p.toFixed(2)+'°';
+ for(const [key,id] of [['AX','ax'],['AY','ay'],['AZ','az'],['GX','gx'],['GY','gy'],['GZ','gz']]){
+  if(Number.isFinite(d[key]))$(id).textContent=d[key].toFixed(3);
+ }
+ if([d.AX,d.AY,d.AZ].every(Number.isFinite)){
+  $('amag').textContent=Math.sqrt(d.AX*d.AX+d.AY*d.AY+d.AZ*d.AZ).toFixed(3)+' g';
+ }
+ if(Number.isFinite(r)&&Number.isFinite(p)){
+  // CSS cube axes are chosen to give a readable board-like response.
+  $('cube').style.transform=`rotateX(${p}deg) rotateY(${-r}deg)`;
+  const threshold=5,active=[];
+  if(p>threshold)active.push('front');
+  if(p< -threshold)active.push('back');
+  if(r< -threshold)active.push('left');
+  if(r>threshold)active.push('right');
+  for(const id of ['front','back','left','right'])$(id).classList.toggle('active',active.includes(id));
+  $('command').textContent=active.length?active.map(x=>'TILT '+x.toUpperCase()).join(' + '):'LEVEL / HOLD';
+  $('command').style.color=active.length?'var(--amber)':'var(--green)';
+ }
+}
+$('connect').addEventListener('click',async()=>{
+ if(!navigator.bluetooth){alert('Web Bluetooth requires Chrome or Edge on HTTPS or localhost.');return}
+ try{
+  $('connect').disabled=true;
+  const device=await navigator.bluetooth.requestDevice({filters:[{name:'ESP-QUAD'}],optionalServices:[SERVICE]});
+  device.addEventListener('gattserverdisconnected',()=>{setStatus('Disconnected',false);$('connect').disabled=false;$('connect').textContent='Reconnect ESP-QUAD'});
+  const server=await device.gatt.connect();
+  const service=await server.getPrimaryService(SERVICE);
+  const tx=await service.getCharacteristic(TX);
+  await tx.startNotifications();
+  tx.addEventListener('characteristicvaluechanged',update);
+  setStatus('Connected · '+device.name,true);
+  $('connect').textContent='Connected';
+  $('connect').disabled=true;
+ }catch(error){console.error(error);setStatus('Connection failed',false);$('connect').disabled=false;alert(error.message)}
+});
+</script></body></html>
